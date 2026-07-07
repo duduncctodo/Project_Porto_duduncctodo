@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import Lenis from 'lenis'
 import profileImage from './picture/profile.png'
@@ -12,13 +12,58 @@ const BOOT_TEXTS = [
   'SYSTEM READY.',
 ]
 
+const NAV_LINKS = [
+  { id: 'intro', label: 'Intro' },
+  { id: 'work', label: 'Experience' },
+  { id: 'uni', label: 'Uni Things' },
+  { id: 'contact', label: 'Contact' },
+]
+
+const WORK_EXPERIENCES = [
+  {
+    id: '01',
+    title: 'Senior Engineer',
+    tags: ['System Arch', 'Go'],
+    description:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin in ante viverra, rutrum erat non, tincidunt neque.',
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAxzmSc1rGWwydT-JqGOvHQq9gZkRumnU7zxaYilv4zngw4dXtULQjjP1YBovjwTQ6bMaquK0BqXgHNWD_A_yoxdTfIIc79qJJM3VT8t2exFthASJCPktLJOqElVhgcF4W7z6b4lOQtxIF3AwfQJ4aNjfogBe7kUBd97yyIjZnzAEBA0v0jx9N3EjVkNQrP5114g9rLQ0jFipg9g62TViQjZOR1BUnLFuWmdGvpEFaad7aeQvhLy7ggA5wZb1zAh3cKS3YLH1semCX7',
+  },
+  {
+    id: '02',
+    title: 'Systems Analyst',
+    tags: ['Data', 'Python'],
+    description:
+      'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Phasellus eget magna.',
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAxzmSc1rGWwydT-JqGOvHQq9gZkRumnU7zxaYilv4zngw4dXtULQjjP1YBovjwTQ6bMaquK0BqXgHNWD_A_yoxdTfIIc79qJJM3VT8t2exFthASJCPktLJOqElVhgcF4W7z6b4lOQtxIF3AwfQJ4aNjfogBe7kUBd97yyIjZnzAEBA0v0jx9N3EjVkNQrP5114g9rLQ0jFipg9g62TViQjZOR1BUnLFuWmdGvpEFaad7aeQvhLy7ggA5wZb1zAh3cKS3YLH1semCX7',
+  },
+  {
+    id: '03',
+    title: 'Frontend Developer',
+    tags: ['React', 'TypeScript'],
+    description:
+      'Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed eget nunc vel nisi bibendum convallis.',
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAxzmSc1rGWwydT-JqGOvHQq9gZkRumnU7zxaYilv4zngw4dXtULQjjP1YBovjwTQ6bMaquK0BqXgHNWD_A_yoxdTfIIc79qJJM3VT8t2exFthASJCPktLJOqElVhgcF4W7z6b4lOQtxIF3AwfQJ4aNjfogBe7kUBd97yyIjZnzAEBA0v0jx9N3EjVkNQrP5114g9rLQ0jFipg9g62TViQjZOR1BUnLFuWmdGvpEFaad7aeQvhLy7ggA5wZb1zAh3cKS3YLH1semCX7',
+  },
+]
+
 function App() {
   const [bootLines, setBootLines] = useState(['INITIALIZING SYSTEMS...'])
   const [progress, setProgress] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [removed, setRemoved] = useState(false)
   const [isDark, setIsDark] = useState(true)
+  const [activeNav, setActiveNav] = useState('')
+  const [workIndex, setWorkIndex] = useState(0)
+  const [workSlideDir, setWorkSlideDir] = useState('')
+  const [workAnimating, setWorkAnimating] = useState(false)
+  const [profileVisible, setProfileVisible] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const canvasRef = useRef(null)
+  const profileRef = useRef(null)
+  const profileImgRef = useRef(null) // direct DOM for parallax — no state re-render
 
   // Preloader: typed boot log + progress bar, then reveal hero/canvas
   useEffect(() => {
@@ -54,9 +99,10 @@ function App() {
     }
   }, [])
 
-  // Theme toggle: mirrors documentElement.classList.toggle('dark', ...)
+  // Theme toggle
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark)
+    document.body.style.backgroundColor = isDark ? '#131313' : '#f0f2f8'
   }, [isDark])
 
   // Three.js particle network background
@@ -204,28 +250,116 @@ function App() {
     return () => observer.disconnect()
   }, [])
 
-  // Mouse parallax on .parallax-element
+  // Active nav highlight on scroll
   useEffect(() => {
-    function handleMouseMove(e) {
-      const mouseX = e.clientX / window.innerWidth - 0.5
-      const mouseY = e.clientY / window.innerHeight - 0.5
-      const speed = 15
-      document.querySelectorAll('.parallax-element').forEach((el) => {
-        el.style.transform = `translate(${mouseX * speed}px, ${mouseY * speed}px)`
+    const sections = NAV_LINKS.map(({ id }) => document.getElementById(id)).filter(Boolean)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActiveNav(entry.target.id)
+        })
+      },
+      { rootMargin: '-30% 0px -60% 0px', threshold: 0 }
+    )
+    sections.forEach((s) => observer.observe(s))
+    return () => observer.disconnect()
+  }, [])
+
+  // Profile image IntersectionObserver scroll reveal (bidirectional)
+  useEffect(() => {
+    const el = profileRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { setProfileVisible(entry.isIntersecting) },
+      { threshold: 0.15 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  // Profile scroll parallax — direct DOM manipulation, zero re-renders
+  useEffect(() => {
+    const isTouchDevice = () => window.matchMedia('(hover: none)').matches
+    if (isTouchDevice()) return
+    let rafId
+    const handleScroll = () => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        const wrapper = profileRef.current
+        const img = profileImgRef.current
+        if (!wrapper || !img) return
+        const rect = wrapper.getBoundingClientRect()
+        const offset = (rect.top + rect.height / 2 - window.innerHeight / 2) * 0.06
+        img.style.transform = `translateY(${offset}px)`
       })
     }
-    function handleMouseLeave() {
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      cancelAnimationFrame(rafId)
+    }
+  }, [])
+
+  // Mouse parallax on .parallax-element — rAF throttled, no React state
+  useEffect(() => {
+    const isTouchDevice = () => window.matchMedia('(hover: none)').matches
+    if (isTouchDevice()) return
+    let rafId
+    let pending = false
+    let lastX = 0, lastY = 0
+    function onMouseMove(e) {
+      lastX = e.clientX / window.innerWidth - 0.5
+      lastY = e.clientY / window.innerHeight - 0.5
+      if (!pending) {
+        pending = true
+        rafId = requestAnimationFrame(() => {
+          pending = false
+          const speed = 12
+          document.querySelectorAll('.parallax-element').forEach((el) => {
+            el.style.transform = `translate(${lastX * speed}px, ${lastY * speed}px)`
+          })
+        })
+      }
+    }
+    function onMouseLeave() {
+      cancelAnimationFrame(rafId)
+      pending = false
       document.querySelectorAll('.parallax-element').forEach((el) => {
         el.style.transform = 'translate(0px, 0px)'
       })
     }
-    window.addEventListener('mousemove', handleMouseMove)
-    document.body.addEventListener('mouseleave', handleMouseLeave)
+    window.addEventListener('mousemove', onMouseMove)
+    document.body.addEventListener('mouseleave', onMouseLeave)
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      document.body.removeEventListener('mouseleave', handleMouseLeave)
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('mousemove', onMouseMove)
+      document.body.removeEventListener('mouseleave', onMouseLeave)
     }
   }, [])
+
+  // Work experience carousel
+  const navigateWork = useCallback(
+    (dir) => {
+      if (workAnimating) return
+      const newIndex =
+        dir === 'next'
+          ? (workIndex + 1) % WORK_EXPERIENCES.length
+          : (workIndex - 1 + WORK_EXPERIENCES.length) % WORK_EXPERIENCES.length
+      setWorkSlideDir(dir === 'next' ? 'slide-out-left' : 'slide-out-right')
+      setWorkAnimating(true)
+      setTimeout(() => {
+        setWorkIndex(newIndex)
+        setWorkSlideDir(dir === 'next' ? 'slide-in-right' : 'slide-in-left')
+        setTimeout(() => {
+          setWorkSlideDir('')
+          setWorkAnimating(false)
+        }, 400)
+      }, 350)
+    },
+    [workIndex, workAnimating]
+  )
+
+  const exp = WORK_EXPERIENCES[workIndex]
 
   return (
     <>
@@ -265,30 +399,150 @@ function App() {
         </div>
       )}
 
-      {/* Top Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-surface/30 dark:bg-surface/30 backdrop-blur-md border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-grid-margin py-sm max-w-full" id="top-nav">
-        <div></div>
-        <ul className="hidden md:flex gap-md items-center">
-          <li><a className="font-label-code text-label-code text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/10 px-xs py-base rounded-sm" href="#intro">Intro</a></li>
-          <li><a className="font-label-code text-label-code text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/10 px-xs py-base rounded-sm" href="#work">Experience</a></li>
-          <li><a className="font-label-code text-label-code text-primary border-b border-primary pb-1 px-xs py-base rounded-sm" href="#uni">Uni Things</a></li>
-          <li><a className="font-label-code text-label-code text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/10 px-xs py-base rounded-sm" href="#contact">Contact</a></li>
+      {/* Top Navigation — glass blur */}
+      <nav
+        className="fixed top-0 w-full z-50 flex justify-between items-center px-grid-margin py-sm max-w-full"
+        id="top-nav"
+        style={{
+          background: isDark ? 'rgba(19,19,19,0.4)' : 'rgba(240,242,248,0.50)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.08)',
+          boxShadow: '0 2px 24px 0 rgba(0,0,0,0.12)',
+        }}
+      >
+        {/* Dark/Light mode toggle — top left */}
+        <div className="flex items-center gap-xs font-label-code text-label-code">
+          <span className={`material-symbols-outlined text-[16px] transition-colors ${isDark ? 'text-on-surface-variant/60' : 'text-amber-500'}`}>light_mode</span>
+          <button
+            id="theme-toggle"
+            aria-label="Toggle dark/light mode"
+            className={`relative w-10 h-5 rounded-full border transition-all duration-300 focus:outline-none ${
+              isDark ? 'bg-primary/20 border-primary/30' : 'bg-amber-100 border-amber-300'
+            }`}
+            onClick={() => setIsDark((d) => !d)}
+          >
+            <div
+              className={`absolute top-[2px] left-[2px] w-4 h-4 rounded-full transition-all duration-300 shadow-md ${
+                isDark ? 'translate-x-5 bg-primary' : 'translate-x-0 bg-amber-400'
+              }`}
+            />
+          </button>
+          <span className={`material-symbols-outlined text-[16px] transition-colors ${isDark ? 'text-primary' : 'text-on-surface-variant/60'}`}>dark_mode</span>
+        </div>
+
+        {/* Nav links — desktop only */}
+        <ul className="hidden md:flex gap-xs items-center">
+          {NAV_LINKS.map(({ id, label }) => {
+            const isActive = activeNav === id
+            return (
+              <li key={id}>
+                <a
+                  className={`font-label-code text-label-code px-xs py-base rounded-sm transition-all duration-200 ${
+                    isActive
+                      ? isDark
+                        ? 'bg-primary text-on-primary font-bold'
+                        : 'bg-on-surface text-inverse-on-surface font-bold'
+                      : 'text-on-surface-variant hover:text-primary hover:bg-primary/10'
+                  }`}
+                  href={`#${id}`}
+                  onClick={() => setActiveNav(id)}
+                >
+                  {label}
+                </a>
+              </li>
+            )
+          })}
         </ul>
-        <div className="flex items-center gap-xs font-label-code text-label-code text-on-surface-variant">
-          made with stitch.ai
-          <button className="ml-2 p-xs text-on-surface-variant hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-[18px]">terminal</span>
+
+        {/* Right: label (desktop) + burger (mobile) */}
+        <div className="flex items-center gap-xs">
+          <div className="hidden md:flex items-center gap-xs font-label-code text-label-code text-on-surface-variant">
+            made with stitch.ai and AntiGravity
+            <button className="ml-2 p-xs text-on-surface-variant hover:text-primary transition-colors">
+              <span className="material-symbols-outlined text-[18px]">terminal</span>
+            </button>
+          </div>
+          {/* Burger button — mobile only */}
+          <button
+            id="burger-btn"
+            aria-label="Toggle navigation menu"
+            className="md:hidden p-xs text-on-surface-variant hover:text-primary transition-colors focus:outline-none"
+            onClick={() => setMobileMenuOpen((o) => !o)}
+          >
+            <span className="material-symbols-outlined text-[24px]">
+              {mobileMenuOpen ? 'close' : 'menu'}
+            </span>
           </button>
         </div>
       </nav>
 
+      {/* Mobile menu drawer */}
+      <div
+        className="fixed top-0 left-0 w-full z-40 md:hidden overflow-hidden"
+        style={{
+          maxHeight: mobileMenuOpen ? '400px' : '0px',
+          transition: 'max-height 0.45s cubic-bezier(0.25,1,0.5,1)',
+        }}
+      >
+        <div
+          className="w-full pt-[72px] pb-md px-grid-margin flex flex-col gap-xs"
+          style={{
+            background: isDark ? 'rgba(19,19,19,0.97)' : 'rgba(240,242,248,0.97)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.08)',
+          }}
+        >
+          {NAV_LINKS.map(({ id, label }) => {
+            const isActive = activeNav === id
+            return (
+              <a
+                key={id}
+                href={`#${id}`}
+                className={`font-label-code text-label-code py-sm px-xs rounded-sm transition-all duration-200 block ${
+                  isActive
+                    ? isDark
+                      ? 'bg-primary/15 text-primary font-bold'
+                      : 'bg-primary/10 text-primary font-bold'
+                    : 'text-on-surface-variant hover:text-primary'
+                }`}
+                onClick={() => { setActiveNav(id); setMobileMenuOpen(false) }}
+              >
+                {label}
+              </a>
+            )
+          })}
+          <div className="mt-sm font-label-code text-[11px] text-on-surface-variant/50">
+            made with stitch.ai and AntiGravity
+          </div>
+        </div>
+      </div>
+
+      {/* Tap-outside overlay to close mobile menu */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-30 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Side Navigation */}
       <aside className="fixed right-grid-margin top-1/2 -translate-y-1/2 z-40 flex flex-col gap-sm items-center bg-transparent transition-all duration-500 ease-in-out hidden xl:flex">
-        <a className="nav-dot text-outline-variant opacity-50 transition-all duration-300 hover:text-primary hover:opacity-100" href="#hero"><span className="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
-        <a className="nav-dot text-outline-variant opacity-50 transition-all duration-300 hover:text-primary hover:opacity-100" href="#intro"><span className="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
-        <a className="nav-dot text-outline-variant opacity-50 transition-all duration-300 hover:text-primary hover:opacity-100" href="#work"><span className="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
-        <a className="nav-dot text-primary scale-125 transition-all duration-300" href="#uni"><span className="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
-        <a className="nav-dot text-outline-variant opacity-50 transition-all duration-300 hover:text-primary hover:opacity-100" href="#contact"><span className="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
+        {NAV_LINKS.map(({ id }) => (
+          <a
+            key={id}
+            className={`nav-dot transition-all duration-300 ${
+              activeNav === id
+                ? 'text-primary scale-125 opacity-100'
+                : 'text-outline-variant opacity-50 hover:text-primary hover:opacity-100'
+            }`}
+            href={`#${id}`}
+            onClick={() => setActiveNav(id)}
+          >
+            <span className="material-symbols-outlined text-[12px]">radio_button_unchecked</span>
+          </a>
+        ))}
       </aside>
 
       <main className="w-full max-w-7xl mx-auto px-sm md:px-grid-margin pb-xl">
@@ -313,9 +567,33 @@ function App() {
           <div className="absolute inset-0 z-[-1] opacity-40 pointer-events-none flex items-center justify-center">
             <div className="w-[600px] h-[400px] rounded-full bg-primary/5 blur-[100px] absolute"></div>
           </div>
-          <div className="w-full max-w-sm aspect-square rounded-2xl overflow-hidden border border-outline-variant/30 shadow-2xl z-10 parallax-element scroll-fade">
-            <img alt="Intro Profile" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" src={profileImage} />
+
+          {/* Profile image: bidirectional scroll-reveal + drop-shadow + scroll parallax (DOM-direct) */}
+          <div
+            ref={profileRef}
+            className="w-full max-w-sm aspect-square z-10"
+            style={{
+              opacity: profileVisible ? 1 : 0,
+              transition: 'opacity 0.85s cubic-bezier(0.25,1,0.5,1)',
+            }}
+          >
+            <img
+              ref={profileImgRef}
+              alt="Profile"
+              className="w-full h-full object-cover rounded-2xl grayscale hover:grayscale-0"
+              src={profileImage}
+              style={{
+                willChange: 'transform, filter',
+                transition: 'filter 1s ease 0.25s',
+                filter: profileVisible
+                  ? isDark
+                    ? 'drop-shadow(0 30px 60px rgba(176,198,255,0.25)) drop-shadow(0 8px 24px rgba(0,0,0,0.75)) grayscale(1)'
+                    : 'drop-shadow(0 30px 60px rgba(71,93,144,0.22)) drop-shadow(0 8px 24px rgba(71,93,144,0.18)) grayscale(1)'
+                  : 'none',
+              }}
+            />
           </div>
+
           <div className="glass-panel p-lg w-full max-w-2xl text-center z-10 parallax-element scroll-fade">
             <h2 className="font-headline-lg text-[32px] font-bold text-on-surface mb-sm">Introduction</h2>
             <p className="font-body-md text-on-surface-variant leading-relaxed">
@@ -324,45 +602,95 @@ function App() {
           </div>
         </section>
 
-        {/* Work Experience Section */}
+        {/* Work Experience Section — Carousel */}
         <section className="relative" id="work">
           <div className="mb-lg flex items-center gap-sm scroll-fade">
             <span className="material-symbols-outlined text-primary text-3xl">work</span>
             <h2 className="font-headline-lg text-[32px] font-bold tracking-wide">WORK EXPERIENCE</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-md parallax-element">
-            <div className="glass-panel p-0 overflow-hidden flex flex-col hover-glow transition-all duration-300 scroll-fade group">
-              <div className="w-full aspect-[21/9] bg-surface-container-highest relative overflow-hidden">
-                <img alt="Senior Engineer" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxzmSc1rGWwydT-JqGOvHQq9gZkRumnU7zxaYilv4zngw4dXtULQjjP1YBovjwTQ6bMaquK0BqXgHNWD_A_yoxdTfIIc79qJJM3VT8t2exFthASJCPktLJOqElVhgcF4W7z6b4lOQtxIF3AwfQJ4aNjfogBe7kUBd97yyIjZnzAEBA0v0jx9N3EjVkNQrP5114g9rLQ0jFipg9g62TViQjZOR1BUnLFuWmdGvpEFaad7aeQvhLy7ggA5wZb1zAh3cKS3YLH1semCX7" />
-                <span className="absolute top-sm right-sm font-label-code text-on-surface-variant text-[10px]">01</span>
-              </div>
-              <div className="p-md flex flex-col flex-grow">
-                <h3 className="font-headline-lg text-[28px] font-bold mb-sm">Senior Engineer</h3>
-                <div className="flex gap-xs mb-md">
-                  <span className="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant">System Arch</span>
-                  <span className="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant">Go</span>
+
+          {/* Carousel wrapper with side nav buttons */}
+          <div className="relative flex items-center gap-md">
+
+            {/* Prev button — far left */}
+            <button
+              id="work-prev-btn"
+              aria-label="Previous work experience"
+              disabled={workAnimating}
+              onClick={() => navigateWork('prev')}
+              className={`flex-shrink-0 w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-200 disabled:opacity-30 ${
+                isDark
+                  ? 'border-outline-variant/50 text-on-surface-variant hover:border-primary hover:text-primary hover:bg-primary/10'
+                  : 'border-outline/50 text-on-surface hover:border-primary hover:text-primary hover:bg-primary/10'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            </button>
+
+            {/* Card — centered, full width */}
+            <div className="flex-1 relative overflow-hidden">
+              <div
+                className={`glass-panel p-0 overflow-hidden flex flex-col md:flex-row hover-glow transition-shadow duration-300 work-slide ${workSlideDir}`}
+                style={{ minHeight: '340px' }}
+              >
+                {/* Image side */}
+                <div className="md:w-5/12 aspect-[16/9] md:aspect-auto bg-surface-container-highest relative overflow-hidden">
+                  <img
+                    alt={exp.title}
+                    className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity duration-500"
+                    src={exp.image}
+                  />
+                  <span className="absolute top-sm right-sm font-label-code text-on-surface-variant text-[10px] bg-surface/60 px-1 rounded">
+                    {exp.id}
+                  </span>
                 </div>
-                <p className="font-body-md text-on-surface-variant">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin in ante viverra, rutrum erat non, tincidunt neque.
-                </p>
+
+                {/* Content side */}
+                <div className="md:w-7/12 p-lg flex flex-col justify-center">
+                  {/* Dot indicators */}
+                  <div className="flex gap-1 mb-md">
+                    {WORK_EXPERIENCES.map((_, i) => (
+                      <div
+                        key={i}
+                        className={`h-[3px] rounded-full transition-all duration-300 ${
+                          i === workIndex ? 'w-8 bg-primary' : 'w-3 bg-outline-variant/60'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <h3 className="font-headline-lg text-[28px] font-bold mb-sm">{exp.title}</h3>
+                  <div className="flex gap-xs mb-md flex-wrap">
+                    {exp.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="font-body-md text-on-surface-variant">{exp.description}</p>
+
+                  {/* Counter */}
+                  <span className="mt-lg font-label-code text-[11px] text-on-surface-variant/60">
+                    {workIndex + 1} / {WORK_EXPERIENCES.length}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="glass-panel p-0 overflow-hidden flex flex-col hover-glow transition-all duration-300 scroll-fade group" style={{ transitionDelay: '100ms' }}>
-              <div className="w-full aspect-[21/9] bg-surface-container-highest relative overflow-hidden">
-                <div className="w-full h-full bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuAxzmSc1rGWwydT-JqGOvHQq9gZkRumnU7zxaYilv4zngw4dXtULQjjP1YBovjwTQ6bMaquK0BqXgHNWD_A_yoxdTfIIc79qJJM3VT8t2exFthASJCPktLJOqElVhgcF4W7z6b4lOQtxIF3AwfQJ4aNjfogBe7kUBd97yyIjZnzAEBA0v0jx9N3EjVkNQrP5114g9rLQ0jFipg9g62TViQjZOR1BUnLFuWmdGvpEFaad7aeQvhLy7ggA5wZb1zAh3cKS3YLH1semCX7')] bg-cover bg-center opacity-40 grayscale group-hover:grayscale-0 group-hover:opacity-80 transition-all duration-500"></div>
-                <span className="absolute top-sm right-sm font-label-code text-on-surface-variant text-[10px]">02</span>
-              </div>
-              <div className="p-md flex flex-col flex-grow">
-                <h3 className="font-headline-lg text-[28px] font-bold mb-sm">Systems Analyst</h3>
-                <div className="flex gap-xs mb-md">
-                  <span className="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant">Data</span>
-                  <span className="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant">Python</span>
-                </div>
-                <p className="font-body-md text-on-surface-variant">
-                  Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Phasellus eget magna.
-                </p>
-              </div>
-            </div>
+
+            {/* Next button — far right */}
+            <button
+              id="work-next-btn"
+              aria-label="Next work experience"
+              disabled={workAnimating}
+              onClick={() => navigateWork('next')}
+              className="flex-shrink-0 w-10 h-10 rounded-full border border-primary flex items-center justify-center text-primary bg-primary/10 hover:bg-primary/25 transition-all duration-200 disabled:opacity-30"
+            >
+              <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+            </button>
+
           </div>
         </section>
 
@@ -429,19 +757,6 @@ function App() {
         </section>
       </main>
 
-      {/* Theme Toggle */}
-      <div className="w-full flex justify-start px-sm md:px-grid-margin mt-xl mb-4 z-50 relative">
-        <div className="flex items-center gap-xs glass-panel px-4 py-2 rounded-full shadow-lg">
-          <span className="material-symbols-outlined text-[14px] text-on-surface-variant">light_mode</span>
-          <button
-            className={`relative w-8 h-4 rounded-full bg-surface-container-high border border-outline-variant/30 transition-colors duration-300 focus:outline-none ${isDark ? 'bg-primary/20' : ''}`}
-            onClick={() => setIsDark((d) => !d)}
-          >
-            <div className={`absolute top-[2px] left-[2px] w-3 h-3 rounded-full bg-primary transition-transform duration-300 ${isDark ? 'translate-x-4' : ''}`}></div>
-          </button>
-          <span className="material-symbols-outlined text-[14px] text-primary">dark_mode</span>
-        </div>
-      </div>
     </>
   )
 }

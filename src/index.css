@@ -23,6 +23,26 @@ body {
   overflow-x: hidden;
   background-color: #131313;
   margin: 0;
+  transition: background-color 0.4s ease;
+}
+
+/* Light mode — better text readability */
+html:not(.dark) body {
+  background-color: #f0f2f8;
+  color: #1a1a2e;
+}
+html:not(.dark) .text-on-surface {
+  color: #1a1a2e !important;
+}
+html:not(.dark) .text-on-surface-variant {
+  color: #3a3a5c !important;
+}
+html:not(.dark) h1, html:not(.dark) h2,
+html:not(.dark) h3, html:not(.dark) h4 {
+  color: #1a1a2e;
+}
+html:not(.dark) p {
+  color: #3a3a5c;
 }
 
 .bg-grid {
@@ -50,10 +70,11 @@ html:not(.dark) .bg-grid {
 }
 
 html:not(.dark) .glass-panel {
-  background-color: rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-top-color: rgba(0, 0, 0, 0.2);
-  border-left-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-top-color: rgba(255, 255, 255, 1);
+  border-left-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 24px 0 rgba(71, 93, 144, 0.10);
 }
 
 .hover-glow:hover {
@@ -62,22 +83,43 @@ html:not(.dark) .glass-panel {
 }
 
 html:not(.dark) .hover-glow:hover {
-  box-shadow: 0 0 20px rgba(176, 198, 255, 0.3);
-  border-color: rgba(176, 198, 255, 0.5);
+  box-shadow: 0 0 20px rgba(71, 93, 144, 0.25);
+  border-color: rgba(71, 93, 144, 0.35);
 }
 
 /* Scroll effect classes */
 .scroll-fade {
-  transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
+  will-change: opacity, transform;
+  transition: opacity 0.7s ease, transform 0.7s ease;
 }
 .scroll-fade.out-of-view {
   opacity: 0;
-  transform: translateY(40px) scale(0.95);
-  filter: blur(10px);
+  transform: translateY(28px) scale(0.97);
+}
+
+/* On desktop only: add blur to scroll-fade */
+@media (hover: hover) {
+  .scroll-fade {
+    transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
+  }
+  .scroll-fade.out-of-view {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+    filter: blur(8px);
+  }
 }
 
 .parallax-element {
-  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+  transition: transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Disable parallax transitions on touch (no mousemove) */
+@media (hover: none) {
+  .parallax-element {
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 section {
@@ -86,6 +128,14 @@ section {
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  section {
+    padding-top: 90px;
+    min-height: auto;
+    padding-bottom: 60px;
+  }
 }
 
 /* Glitch Effect */
@@ -171,6 +221,33 @@ section {
   text-shadow: 0 0 20px rgba(217, 226, 255, 0.5), 0 0 40px rgba(217, 226, 255, 0.3);
 }
 
+html:not(.dark) .glow-text {
+  text-shadow: 0 0 20px rgba(71, 93, 144, 0.4), 0 0 40px rgba(71, 93, 144, 0.2);
+}
+
+/* Work Carousel slide animations */
+@keyframes slideOutLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(-60px); opacity: 0; }
+}
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(60px); opacity: 0; }
+}
+@keyframes slideInRight {
+  from { transform: translateX(60px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-60px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+.work-slide.slide-out-left  { animation: slideOutLeft  0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
+.work-slide.slide-out-right { animation: slideOutRight 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
+.work-slide.slide-in-right  { animation: slideInRight  0.4s  cubic-bezier(0.4,0,0.2,1) forwards; }
+.work-slide.slide-in-left   { animation: slideInLeft   0.4s  cubic-bezier(0.4,0,0.2,1) forwards; }
+
 #bg-canvas {
   position: fixed;
   top: 0;
@@ -181,4 +258,14 @@ section {
   pointer-events: none;
   opacity: 0;
   transition: opacity 1.5s ease-out;
+}
+
+/* Mobile: reduce Three.js canvas opacity to improve readability */
+@media (max-width: 768px) {
+  #bg-canvas {
+    opacity: 0 !important;
+  }
+  .glow-text {
+    text-shadow: 0 0 12px rgba(217, 226, 255, 0.4);
+  }
 }
