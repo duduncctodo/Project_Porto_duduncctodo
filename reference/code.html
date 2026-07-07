@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Portfolio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#0e0e0e",
+                        "tertiary-container": "#c6c7c7",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-tertiary-container": "#515353",
+                        "outline-variant": "#44464f",
+                        "surface-container-high": "#2a2a2a",
+                        "on-secondary-fixed-variant": "#474746",
+                        "on-background": "#e5e2e1",
+                        "on-surface": "#e5e2e1",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#e2e2e2",
+                        "error": "#ffb4ab",
+                        "on-primary": "#162f5e",
+                        "primary-fixed": "#d9e2ff",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "on-primary-fixed": "#001944",
+                        "secondary-container": "#474746",
+                        "on-surface-variant": "#c5c6d0",
+                        "surface-dim": "#131313",
+                        "tertiary": "#e3e3e3",
+                        "primary": "#d9e2ff",
+                        "inverse-on-surface": "#313030",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "surface-bright": "#3a3939",
+                        "surface": "#131313",
+                        "on-secondary": "#313030",
+                        "surface-tint": "#b0c6ff",
+                        "outline": "#8e909a",
+                        "on-secondary-container": "#b7b5b4",
+                        "secondary": "#c8c6c5",
+                        "primary-container": "#b0c6ff",
+                        "surface-container": "#201f1f",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "on-tertiary": "#2f3131",
+                        "on-error": "#690005",
+                        "background": "#131313",
+                        "error-container": "#93000a",
+                        "surface-variant": "#353534",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "inverse-primary": "#475d90",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-primary-container": "#3b5183",
+                        "surface-container-highest": "#353534",
+                        "primary-fixed-dim": "#b0c6ff",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-primary-fixed-variant": "#2f4576"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "grid-margin": "32px",
+                        "grid-gutter": "24px",
+                        "xs": "8px",
+                        "md": "24px",
+                        "lg": "40px",
+                        "xl": "80px",
+                        "sm": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Geist"],
+                        "body-md": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "label-code": ["JetBrains Mono"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-xl": ["Geist"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "label-code": ["14px", { "lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "headline-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+<style>
+        body {
+            overflow-x: hidden;
+            background-color: #131313;
+        }
+
+        .bg-grid {
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 24px 24px;
+            background-position: center top;
+        }
+
+        html:not(.dark) .bg-grid {
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-color: #f5f5f5;
+        }
+
+        .glass-panel {
+            background-color: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-top-color: rgba(255, 255, 255, 0.1);
+            border-left-color: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        html:not(.dark) .glass-panel {
+            background-color: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-top-color: rgba(0, 0, 0, 0.2);
+            border-left-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .hover-glow:hover {
+            box-shadow: 0 0 20px rgba(176, 198, 255, 0.1);
+            border-color: rgba(176, 198, 255, 0.2);
+        }
+
+        html:not(.dark) .hover-glow:hover {
+            box-shadow: 0 0 20px rgba(176, 198, 255, 0.3);
+            border-color: rgba(176, 198, 255, 0.5);
+        }
+
+        /* Scroll effect classes */
+        .scroll-fade {
+            transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
+        }
+        .scroll-fade.out-of-view {
+            opacity: 0;
+            transform: translateY(40px) scale(0.95);
+            filter: blur(10px);
+        }
+
+        .parallax-element {
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        section {
+            min-height: 100vh;
+            padding-top: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Glitch Effect */
+        .glitch-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .glitch {
+            position: relative;
+            color: var(--on-surface);
+        }
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        .glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 red;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 blue;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(33px, 9999px, 86px, 0); }
+            5% { clip: rect(47px, 9999px, 20px, 0); }
+            10% { clip: rect(100px, 9999px, 67px, 0); }
+            15% { clip: rect(25px, 9999px, 89px, 0); }
+            20% { clip: rect(69px, 9999px, 11px, 0); }
+            25% { clip: rect(11px, 9999px, 76px, 0); }
+            30% { clip: rect(89px, 9999px, 44px, 0); }
+            35% { clip: rect(37px, 9999px, 93px, 0); }
+            40% { clip: rect(72px, 9999px, 28px, 0); }
+            45% { clip: rect(21px, 9999px, 81px, 0); }
+            50% { clip: rect(96px, 9999px, 34px, 0); }
+            55% { clip: rect(14px, 9999px, 63px, 0); }
+            60% { clip: rect(58px, 9999px, 19px, 0); }
+            65% { clip: rect(82px, 9999px, 51px, 0); }
+            70% { clip: rect(41px, 9999px, 87px, 0); }
+            75% { clip: rect(16px, 9999px, 99px, 0); }
+            80% { clip: rect(92px, 9999px, 23px, 0); }
+            85% { clip: rect(64px, 9999px, 75px, 0); }
+            90% { clip: rect(31px, 9999px, 12px, 0); }
+            95% { clip: rect(79px, 9999px, 56px, 0); }
+            100% { clip: rect(53px, 9999px, 94px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); }
+            5% { clip: rect(52px, 9999px, 74px, 0); }
+            10% { clip: rect(79px, 9999px, 85px, 0); }
+            15% { clip: rect(75px, 9999px, 5px, 0); }
+            20% { clip: rect(67px, 9999px, 61px, 0); }
+            25% { clip: rect(14px, 9999px, 79px, 0); }
+            30% { clip: rect(1px, 9999px, 66px, 0); }
+            35% { clip: rect(86px, 9999px, 30px, 0); }
+            40% { clip: rect(23px, 9999px, 98px, 0); }
+            45% { clip: rect(85px, 9999px, 72px, 0); }
+            50% { clip: rect(71px, 9999px, 75px, 0); }
+            55% { clip: rect(2px, 9999px, 48px, 0); }
+            60% { clip: rect(30px, 9999px, 16px, 0); }
+            65% { clip: rect(59px, 9999px, 50px, 0); }
+            70% { clip: rect(41px, 9999px, 62px, 0); }
+            75% { clip: rect(2px, 9999px, 82px, 0); }
+            80% { clip: rect(47px, 9999px, 73px, 0); }
+            85% { clip: rect(3px, 9999px, 27px, 0); }
+            90% { clip: rect(26px, 9999px, 55px, 0); }
+            95% { clip: rect(42px, 9999px, 97px, 0); }
+            100% { clip: rect(38px, 9999px, 49px, 0); }
+        }
+
+        .glow-text {
+            text-shadow: 0 0 20px rgba(217, 226, 255, 0.5), 0 0 40px rgba(217, 226, 255, 0.3);
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.5s ease-out;
+        }
+    </style>
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body class="bg-surface dark:bg-surface-dim bg-grid text-on-surface font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container transition-colors duration-300">
+<canvas id="bg-canvas"></canvas>
+<!-- Cinematic Blur Overlay -->
+<div class="fixed inset-0 z-[90] backdrop-blur-[40px] bg-surface-dim/70 transition-all duration-[2000ms] ease-in-out pointer-events-none" id="intro-blur-overlay"></div>
+<!-- Preloader -->
+<div class="fixed inset-0 z-[100] bg-surface-dim flex flex-col items-center justify-center font-label-code text-label-code text-primary transition-opacity duration-[1000ms] ease-out" id="preloader">
+<div class="w-full max-w-md p-sm border border-outline-variant/30 glass-panel">
+<div class="mb-sm h-24 overflow-hidden flex flex-col justify-end" id="boot-sequence">
+<div class="text-on-surface-variant animate-pulse">&gt; INITIALIZING SYSTEMS...</div>
+</div>
+<div class="flex items-center gap-sm">
+<div class="flex-grow h-[2px] bg-surface-container-high relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-primary w-0 transition-all duration-75" id="progress-bar"></div>
+</div>
+<span id="progress-text">0%</span>
+</div>
+</div>
+</div>
+<!-- Top Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-surface/30 dark:bg-surface/30 backdrop-blur-md border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-grid-margin py-sm max-w-full" id="top-nav">
+<div></div>
+<ul class="hidden md:flex gap-md items-center">
+<li><a class="font-label-code text-label-code text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/10 px-xs py-base rounded-sm" href="#hero">Hero</a></li>
+<li><a class="font-label-code text-label-code text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/10 px-xs py-base rounded-sm" href="#intro">Intro</a></li>
+<li><a class="font-label-code text-label-code text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/10 px-xs py-base rounded-sm" href="#work">Experience</a></li>
+<li><a class="font-label-code text-label-code text-primary border-b border-primary pb-1 px-xs py-base rounded-sm" href="#uni">Uni Things</a></li>
+<li><a class="font-label-code text-label-code text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/10 px-xs py-base rounded-sm" href="#contact">Contact</a></li>
+</ul>
+<div class="flex items-center gap-xs font-label-code text-label-code text-on-surface-variant">
+            made with stitch.ai
+            <button class="ml-2 p-xs text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</button>
+</div>
+</nav>
+<!-- Side Navigation -->
+<aside class="fixed right-grid-margin top-1/2 -translate-y-1/2 z-40 flex flex-col gap-sm items-center bg-transparent transition-all duration-500 ease-in-out hidden xl:flex">
+<div class="mb-sm text-center">
+<span class="material-symbols-outlined text-[14px] text-primary mb-1">radio_button_checked</span>
+<div class="font-label-code text-[10px] text-on-surface-variant">System Status</div>
+<div class="font-label-code text-[10px] text-on-surface-variant">Precision Grid</div>
+</div>
+<a class="nav-dot text-outline-variant opacity-50 transition-all duration-300 hover:text-primary hover:opacity-100" href="#hero"><span class="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
+<a class="nav-dot text-outline-variant opacity-50 transition-all duration-300 hover:text-primary hover:opacity-100" href="#intro"><span class="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
+<a class="nav-dot text-outline-variant opacity-50 transition-all duration-300 hover:text-primary hover:opacity-100" href="#work"><span class="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
+<a class="nav-dot text-primary scale-125 transition-all duration-300" href="#uni"><span class="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
+<a class="nav-dot text-outline-variant opacity-50 transition-all duration-300 hover:text-primary hover:opacity-100" href="#contact"><span class="material-symbols-outlined text-[12px]">radio_button_unchecked</span></a>
+</aside>
+<main class="w-full max-w-7xl mx-auto px-sm md:px-grid-margin pb-xl">
+<!-- Hero Section -->
+<section class="relative items-start justify-center flex-col min-h-[90vh] opacity-0 scale-[0.90] transition-all duration-[2000ms] ease-[cubic-bezier(0.25,1,0.5,1)]" id="hero">
+<div class="max-w-4xl scroll-fade parallax-element z-10">
+<h1 class="text-[clamp(3rem,8vw,6rem)] font-headline-xl font-bold leading-none tracking-tighter mb-4 text-on-surface flex flex-col gap-2">
+<span class="text-on-surface-variant/80">see it,</span>
+<span class="glitch-wrapper">
+<span class="glitch" data-text="think it">think it</span>
+</span>
+<span class="text-primary glow-text uppercase tracking-widest mt-4 text-[clamp(4rem,10vw,8rem)]">solve it</span>
+</h1>
+</div>
+</section>
+<!-- Intro Section -->
+<section class="relative items-center justify-center flex-col gap-lg" id="intro">
+<!-- 3D Background Placeholder -->
+<div class="absolute inset-0 z-[-1] opacity-40 pointer-events-none flex items-center justify-center">
+<!-- Decorative nodes representing 3D background -->
+<div class="w-[600px] h-[400px] rounded-full bg-primary/5 blur-[100px] absolute"></div>
+</div>
+<div class="w-full max-w-sm aspect-square rounded-2xl overflow-hidden border border-outline-variant/30 shadow-2xl z-10 parallax-element scroll-fade">
+<img alt="Intro Profile" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKzwft0eVykUJL5QA6HHWXKzhdLsquPluaoZsaG36GTFSG-gm6951F2soyHZ7S_uP99xUC0kNfT12jGv2BeeXinavpnXT53kZRkOaLJ8MU_3Gw3QrR-Tbhp4W5-KWHDRLYYiqmYLWu9Eh3al2KVd1ivgjL8j63sw2gwYyog5WAWMMZdX2ZUC9j2YRAGZg-FYcH1v7JUbbLIfNp-RBdfJlTOwvvkGSs1mXAao-24lV-TM8r7Kt9dF7exr3UpkRigOh23u98xGex9jQT"/>
+</div>
+<div class="glass-panel p-lg w-full max-w-2xl text-center z-10 parallax-element scroll-fade">
+<h2 class="font-headline-lg text-[32px] font-bold text-on-surface mb-sm">Introduction</h2>
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                </p>
+</div>
+</section>
+<!-- Work Experience Section -->
+<section class="relative" id="work">
+<div class="mb-lg flex items-center gap-sm scroll-fade">
+<span class="material-symbols-outlined text-primary text-3xl">work</span>
+<h2 class="font-headline-lg text-[32px] font-bold tracking-wide">WORK EXPERIENCE</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md parallax-element">
+<!-- Item 1 -->
+<div class="glass-panel p-0 overflow-hidden flex flex-col hover-glow transition-all duration-300 scroll-fade group">
+<div class="w-full aspect-[21/9] bg-surface-container-highest relative overflow-hidden">
+<img alt="Senior Engineer" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxzmSc1rGWwydT-JqGOvHQq9gZkRumnU7zxaYilv4zngw4dXtULQjjP1YBovjwTQ6bMaquK0BqXgHNWD_A_yoxdTfIIc79qJJM3VT8t2exFthASJCPktLJOqElVhgcF4W7z6b4lOQtxIF3AwfQJ4aNjfogBe7kUBd97yyIjZnzAEBA0v0jx9N3EjVkNQrP5114g9rLQ0jFipg9g62TViQjZOR1BUnLFuWmdGvpEFaad7aeQvhLy7ggA5wZb1zAh3cKS3YLH1semCX7"/>
+<span class="absolute top-sm right-sm font-label-code text-on-surface-variant text-[10px]">01</span>
+</div>
+<div class="p-md flex flex-col flex-grow">
+<h3 class="font-headline-lg text-[28px] font-bold mb-sm">Senior Engineer</h3>
+<div class="flex gap-xs mb-md">
+<span class="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant">System Arch</span>
+<span class="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant">Go</span>
+</div>
+<p class="font-body-md text-on-surface-variant">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin in ante viverra, rutrum erat non, tincidunt neque.
+                        </p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="glass-panel p-0 overflow-hidden flex flex-col hover-glow transition-all duration-300 scroll-fade group" style="transition-delay: 100ms;">
+<div class="w-full aspect-[21/9] bg-surface-container-highest relative overflow-hidden">
+<div class="w-full h-full bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuAxzmSc1rGWwydT-JqGOvHQq9gZkRumnU7zxaYilv4zngw4dXtULQjjP1YBovjwTQ6bMaquK0BqXgHNWD_A_yoxdTfIIc79qJJM3VT8t2exFthASJCPktLJOqElVhgcF4W7z6b4lOQtxIF3AwfQJ4aNjfogBe7kUBd97yyIjZnzAEBA0v0jx9N3EjVkNQrP5114g9rLQ0jFipg9g62TViQjZOR1BUnLFuWmdGvpEFaad7aeQvhLy7ggA5wZb1zAh3cKS3YLH1semCX7')] bg-cover bg-center opacity-40 grayscale group-hover:grayscale-0 group-hover:opacity-80 transition-all duration-500"></div>
+<span class="absolute top-sm right-sm font-label-code text-on-surface-variant text-[10px]">02</span>
+</div>
+<div class="p-md flex flex-col flex-grow">
+<h3 class="font-headline-lg text-[28px] font-bold mb-sm">Systems Analyst</h3>
+<div class="flex gap-xs mb-md">
+<span class="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant">Data</span>
+<span class="font-label-code text-[12px] border border-outline-variant/50 px-2 py-1 rounded text-on-surface-variant">Python</span>
+</div>
+<p class="font-body-md text-on-surface-variant">
+                            Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Phasellus eget magna.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Uni Things Section -->
+<section class="relative" id="uni">
+<div class="mb-lg flex items-center gap-sm scroll-fade">
+<span class="material-symbols-outlined text-primary text-3xl">school</span>
+<h2 class="font-headline-lg text-[32px] font-bold tracking-wide">UNI THINGS</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md parallax-element">
+<!-- Item 1 -->
+<div class="glass-panel p-0 overflow-hidden flex flex-col hover-glow transition-all duration-300 scroll-fade group">
+<div class="w-full aspect-[4/3] bg-surface-container-highest relative overflow-hidden">
+<img alt="Research Lab" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbCXrOtyK61gTu4FSqwm9ELpYYh6pSGI723taKy65pD_F7VqVl-sRFJJyxke3dkHepY5G-1V7SqleDVHeVlmRlOkXsu9dnmg_mtif7fkQUMdgOrp-K_TK5mlnU-j8t_GTUurd85lkS75b4ksvHYWTU8VwN1nj0duKU5huKFfNjiQx_YJrAm9EjjiUnkpFQRMsHgDOD4zpeeihhWM3uLLqMDDSDuK1YXDmKbnkH2b7lERz8MhGBfA-GpTIysaEbRDdj0wCAkcgRvZt-"/>
+</div>
+<div class="p-md flex flex-col flex-grow bg-surface-dim/50">
+<span class="material-symbols-outlined text-on-surface-variant mb-sm text-[28px]">science</span>
+<h3 class="font-headline-lg text-[20px] font-bold mb-xs">Research Lab</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam erat volutpat.
+                        </p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="glass-panel p-0 overflow-hidden flex flex-col hover-glow transition-all duration-300 scroll-fade group" style="transition-delay: 100ms;">
+<div class="w-full aspect-[4/3] bg-surface-container-highest relative overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuAxzmSc1rGWwydT-JqGOvHQq9gZkRumnU7zxaYilv4zngw4dXtULQjjP1YBovjwTQ6bMaquK0BqXgHNWD_A_yoxdTfIIc79qJJM3VT8t2exFthASJCPktLJOqElVhgcF4W7z6b4lOQtxIF3AwfQJ4aNjfogBe7kUBd97yyIjZnzAEBA0v0jx9N3EjVkNQrP5114g9rLQ0jFipg9g62TViQjZOR1BUnLFuWmdGvpEFaad7aeQvhLy7ggA5wZb1zAh3cKS3YLH1semCX7')] bg-cover bg-center opacity-30 grayscale mix-blend-overlay"></div>
+<h4 class="font-headline-xl font-bold text-on-surface z-10 text-center uppercase tracking-widest text-[24px]">Byte<br/>Breakers</h4>
+</div>
+<div class="p-md flex flex-col flex-grow bg-surface-dim/50">
+<span class="material-symbols-outlined text-on-surface-variant mb-sm text-[28px]">code</span>
+<h3 class="font-headline-lg text-[20px] font-bold mb-xs">Hackathon Club</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant">
+                            Suspendisse potenti. Nullam id dolor id nibh ultricies vehicula ut id elit.
+                        </p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="glass-panel p-0 overflow-hidden flex flex-col hover-glow transition-all duration-300 scroll-fade group" style="transition-delay: 200ms;">
+<div class="w-full aspect-[4/3] bg-surface-container-highest relative overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 bg-gradient-to-br from-surface-container-lowest to-surface-container-high opacity-80"></div>
+<h4 class="font-headline-xl font-bold text-on-surface z-10 text-center uppercase tracking-widest text-[24px]">Archi-Tech<br/>Studio</h4>
+</div>
+<div class="p-md flex flex-col flex-grow bg-surface-dim/50">
+<span class="material-symbols-outlined text-on-surface-variant mb-sm text-[28px]">architecture</span>
+<h3 class="font-headline-lg text-[20px] font-bold mb-xs">Design Studio</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant">
+                            Cras justo odio, dapibus ac facilisis in, egestas eget quam.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Contact Section -->
+<section class="relative items-center text-center pb-0" id="contact">
+<div class="mb-lg scroll-fade">
+<h2 class="text-[clamp(3rem,8vw,6rem)] font-headline-xl font-bold leading-none tracking-tighter mb-0 text-on-surface">CONTACT</h2>
+</div>
+<div class="flex gap-sm w-full justify-center max-w-2xl mx-auto parallax-element scroll-fade">
+<a class="font-label-code text-on-surface-variant hover:text-primary transition-colors border-b border-outline-variant pb-1" href="#">Email</a>
+<span class="text-outline-variant">/</span>
+<a class="font-label-code text-on-surface-variant hover:text-primary transition-colors border-b border-outline-variant pb-1" href="#">LinkedIn</a>
+<span class="text-outline-variant">/</span>
+<a class="font-label-code text-on-surface-variant hover:text-primary transition-colors border-b border-outline-variant pb-1" href="#">Twitter</a>
+</div>
+</section>
+</main>
+<!-- Theme Toggle -->
+<div class="w-full flex justify-start px-sm md:px-grid-margin mt-xl mb-4 z-50 relative">
+<div class="flex items-center gap-xs glass-panel px-4 py-2 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">light_mode</span>
+<button class="relative w-8 h-4 rounded-full bg-surface-container-high border border-outline-variant/30 transition-colors duration-300 focus:outline-none bg-primary/20" onclick="document.documentElement.classList.toggle('dark'); this.querySelector('div').classList.toggle('translate-x-4'); this.classList.toggle('bg-primary/20')">
+<div class="absolute top-[2px] left-[2px] w-3 h-3 rounded-full bg-primary transition-transform duration-300 translate-x-4"></div>
+</button>
+<span class="material-symbols-outlined text-[14px] text-primary">dark_mode</span>
+</div>
+</div>
+<script>
+        // Three.js Background Logic
+        const canvas = document.getElementById('bg-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 50;
+
+        // CPU Node network
+        const particles = new THREE.BufferGeometry();
+        const particleCount = 1000;
+        const posArray = new Float32Array(particleCount * 3);
+
+        for(let i = 0; i < particleCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 100;
+        }
+
+        particles.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const material = new THREE.PointsMaterial({
+            size: 0.2,
+            color: 0xd9e2ff,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particleMesh = new THREE.Points(particles, material);
+        scene.add(particleMesh);
+
+        // Lines connecting close nodes
+        const lineMaterial = new THREE.LineBasicMaterial({
+            color: 0x44464f,
+            transparent: true,
+            opacity: 0.15
+        });
+
+        // Simplified line creation for performance
+        const lineGeometry = new THREE.BufferGeometry();
+        const linePositions = new Float32Array(500 * 3 * 2); // 500 lines
+        for(let i=0; i < 500 * 3 * 2; i+=6) {
+            let p1 = Math.floor(Math.random() * particleCount) * 3;
+            let p2 = Math.floor(Math.random() * particleCount) * 3;
+            linePositions[i] = posArray[p1];
+            linePositions[i+1] = posArray[p1+1];
+            linePositions[i+2] = posArray[p1+2];
+            linePositions[i+3] = posArray[p2];
+            linePositions[i+4] = posArray[p2+1];
+            linePositions[i+5] = posArray[p2+2];
+        }
+        lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+        scene.add(lines);
+
+        // Mouse interaction for Three.js
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX) * 0.05;
+            mouseY = (event.clientY - windowHalfY) * 0.05;
+        });
+
+        // Animation loop
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            targetX = mouseX * 0.5;
+            targetY = mouseY * 0.5;
+
+            particleMesh.rotation.y += 0.001;
+            lines.rotation.y += 0.001;
+            
+            // Subtle wave effect on particles
+            const positions = particleMesh.geometry.attributes.position.array;
+            for(let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                positions[i3 + 1] += Math.sin(elapsedTime * 0.5 + positions[i3]) * 0.02;
+            }
+            particleMesh.geometry.attributes.position.needsUpdate = true;
+
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            camera.position.y += (-targetY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Preloader Logic
+        const bootSequenceTexts = [
+            "INITIALIZING SYSTEMS...",
+            "LOADING ASSETS...",
+            "ESTABLISHING SECURE CONNECTION...",
+            "BYPASSING SECURITY PROTOCOLS...",
+            "DECRYPTING PAYLOAD...",
+            "SYSTEM READY."
+        ];
+        
+        const bootContainer = document.getElementById('boot-sequence');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const preloader = document.getElementById('preloader');
+        const introOverlay = document.getElementById('intro-blur-overlay');
+
+        let progress = 0;
+        let textIndex = 0;
+
+        const bootInterval = setInterval(() => {
+            if (textIndex < bootSequenceTexts.length) {
+                const p = document.createElement('div');
+                p.textContent = `> ${bootSequenceTexts[textIndex]}`;
+                p.className = 'text-on-surface-variant animate-pulse';
+                bootContainer.appendChild(p);
+                textIndex++;
+            }
+        }, 300);
+
+        const progressInterval = setInterval(() => {
+            progress += Math.floor(Math.random() * 8) + 2;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(progressInterval);
+                clearInterval(bootInterval);
+                
+                progressBar.style.width = '100%';
+                progressText.textContent = '100%';
+
+                setTimeout(() => {
+                    // Fade out terminal preloader
+                    preloader.style.opacity = '0';
+                    preloader.style.pointerEvents = 'none';
+                    
+                    // Dissolve cinematic glass blur overlay
+                    if(introOverlay) {
+                        introOverlay.style.backdropFilter = 'blur(0px)';
+                        introOverlay.style.webkitBackdropFilter = 'blur(0px)';
+                        introOverlay.style.backgroundColor = 'rgba(19, 19, 19, 0)';
+                        introOverlay.style.opacity = '0';
+                    }
+
+                    // Reveal hero section smoothly
+                    const hero = document.getElementById('hero');
+                    hero.classList.remove('opacity-0', 'scale-[0.90]');
+                    hero.classList.add('opacity-100', 'scale-100');
+                    
+                    // Reveal background canvas
+                    document.getElementById('bg-canvas').style.opacity = '0.6';
+
+                    // Cleanup DOM
+                    setTimeout(() => {
+                        preloader.style.display = 'none';
+                        if(introOverlay) introOverlay.style.display = 'none';
+                    }, 2000);
+                }, 600);
+            } else {
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${progress}%`;
+            }
+        }, 40);
+
+        // Lenis Smooth Scroll Setup
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+            infinite: false,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // Dynamic Glass Blur/Fade using Intersection Observer
+        const observerOptions = {
+            root: null,
+            rootMargin: '-10% 0px -10% 0px',
+            threshold: 0.15
+        };
+
+        const fadeElements = document.querySelectorAll('.scroll-fade');
+        
+        const scrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.remove('out-of-view');
+                } else {
+                    entry.target.classList.add('out-of-view');
+                }
+            });
+        }, observerOptions);
+
+        fadeElements.forEach(el => {
+            el.classList.add('out-of-view'); // Initial state
+            scrollObserver.observe(el);
+        });
+
+        // Mouse Parallax Effect
+        const parallaxElements = document.querySelectorAll('.parallax-element');
+        
+        window.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX / window.innerWidth - 0.5;
+            const mouseY = e.clientY / window.innerHeight - 0.5;
+
+            parallaxElements.forEach(el => {
+                const speed = 15;
+                const x = mouseX * speed;
+                const y = mouseY * speed;
+                el.style.transform = `translate(${x}px, ${y}px)`;
+            });
+        });
+
+        // Reset transform on mouse leave to prevent getting stuck
+        document.body.addEventListener('mouseleave', () => {
+             parallaxElements.forEach(el => {
+                el.style.transform = `translate(0px, 0px)`;
+            });
+        });
+
+    </script>
+</body></html>

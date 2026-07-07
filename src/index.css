@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  overflow-x: hidden;
+  background-color: #131313;
+  margin: 0;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: center top;
+}
+
+html:not(.dark) .bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+  background-color: #f5f5f5;
+}
+
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-top-color: rgba(255, 255, 255, 0.1);
+  border-left-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+html:not(.dark) .glass-panel {
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-top-color: rgba(0, 0, 0, 0.2);
+  border-left-color: rgba(0, 0, 0, 0.2);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(176, 198, 255, 0.1);
+  border-color: rgba(176, 198, 255, 0.2);
+}
+
+html:not(.dark) .hover-glow:hover {
+  box-shadow: 0 0 20px rgba(176, 198, 255, 0.3);
+  border-color: rgba(176, 198, 255, 0.5);
+}
+
+/* Scroll effect classes */
+.scroll-fade {
+  transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
+}
+.scroll-fade.out-of-view {
+  opacity: 0;
+  transform: translateY(40px) scale(0.95);
+  filter: blur(10px);
+}
+
+.parallax-element {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+section {
+  min-height: 100vh;
+  padding-top: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Glitch Effect */
+.glitch-wrapper {
+  position: relative;
+  display: inline-block;
+}
+.glitch {
+  position: relative;
+  color: var(--on-surface);
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+.glitch::before {
+  left: 2px;
+  text-shadow: -1px 0 red;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+.glitch::after {
+  left: -2px;
+  text-shadow: -1px 0 blue;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% { clip: rect(33px, 9999px, 86px, 0); }
+  5% { clip: rect(47px, 9999px, 20px, 0); }
+  10% { clip: rect(100px, 9999px, 67px, 0); }
+  15% { clip: rect(25px, 9999px, 89px, 0); }
+  20% { clip: rect(69px, 9999px, 11px, 0); }
+  25% { clip: rect(11px, 9999px, 76px, 0); }
+  30% { clip: rect(89px, 9999px, 44px, 0); }
+  35% { clip: rect(37px, 9999px, 93px, 0); }
+  40% { clip: rect(72px, 9999px, 28px, 0); }
+  45% { clip: rect(21px, 9999px, 81px, 0); }
+  50% { clip: rect(96px, 9999px, 34px, 0); }
+  55% { clip: rect(14px, 9999px, 63px, 0); }
+  60% { clip: rect(58px, 9999px, 19px, 0); }
+  65% { clip: rect(82px, 9999px, 51px, 0); }
+  70% { clip: rect(41px, 9999px, 87px, 0); }
+  75% { clip: rect(16px, 9999px, 99px, 0); }
+  80% { clip: rect(92px, 9999px, 23px, 0); }
+  85% { clip: rect(64px, 9999px, 75px, 0); }
+  90% { clip: rect(31px, 9999px, 12px, 0); }
+  95% { clip: rect(79px, 9999px, 56px, 0); }
+  100% { clip: rect(53px, 9999px, 94px, 0); }
+}
+@keyframes glitch-anim2 {
+  0% { clip: rect(65px, 9999px, 100px, 0); }
+  5% { clip: rect(52px, 9999px, 74px, 0); }
+  10% { clip: rect(79px, 9999px, 85px, 0); }
+  15% { clip: rect(75px, 9999px, 5px, 0); }
+  20% { clip: rect(67px, 9999px, 61px, 0); }
+  25% { clip: rect(14px, 9999px, 79px, 0); }
+  30% { clip: rect(1px, 9999px, 66px, 0); }
+  35% { clip: rect(86px, 9999px, 30px, 0); }
+  40% { clip: rect(23px, 9999px, 98px, 0); }
+  45% { clip: rect(85px, 9999px, 72px, 0); }
+  50% { clip: rect(71px, 9999px, 75px, 0); }
+  55% { clip: rect(2px, 9999px, 48px, 0); }
+  60% { clip: rect(30px, 9999px, 16px, 0); }
+  65% { clip: rect(59px, 9999px, 50px, 0); }
+  70% { clip: rect(41px, 9999px, 62px, 0); }
+  75% { clip: rect(2px, 9999px, 82px, 0); }
+  80% { clip: rect(47px, 9999px, 73px, 0); }
+  85% { clip: rect(3px, 9999px, 27px, 0); }
+  90% { clip: rect(26px, 9999px, 55px, 0); }
+  95% { clip: rect(42px, 9999px, 97px, 0); }
+  100% { clip: rect(38px, 9999px, 49px, 0); }
+}
+
+.glow-text {
+  text-shadow: 0 0 20px rgba(217, 226, 255, 0.5), 0 0 40px rgba(217, 226, 255, 0.3);
+}
+
+#bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.5s ease-out;
+}
