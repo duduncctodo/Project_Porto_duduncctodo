@@ -23,14 +23,14 @@ export default function Navbar({ isDark, setIsDark, activeNav, setActiveNav }) {
           <button
             id="theme-toggle"
             aria-label="Toggle dark/light mode"
-            className={`relative w-10 h-5 rounded-full border transition-all duration-300 focus:outline-none ${
+            className={`relative w-10 h-5 rounded-full border transition-colors duration-300 focus:outline-none ${
               isDark ? 'bg-primary/20 border-primary/30' : 'bg-amber-100 border-amber-300'
             }`}
             onClick={() => setIsDark((d) => !d)}
           >
             <div
-              className={`absolute top-[2px] left-[2px] w-4 h-4 rounded-full transition-all duration-300 shadow-md ${
-                isDark ? 'translate-x-5 bg-primary' : 'translate-x-0 bg-amber-400'
+              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full shadow-md transition-[left] duration-300 ${
+                isDark ? 'left-[20px] bg-primary' : 'left-[2px] bg-amber-400'
               }`}
             />
           </button>

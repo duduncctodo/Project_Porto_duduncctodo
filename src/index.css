@@ -260,10 +260,10 @@ html:not(.dark) .glow-text {
   transition: opacity 1.5s ease-out;
 }
 
-/* Mobile: reduce Three.js canvas opacity to improve readability */
+/* Mobile: dim (not hide) the Three.js canvas to keep text readable */
 @media (max-width: 768px) {
   #bg-canvas {
-    opacity: 0 !important;
+    opacity: 0.35 !important;
   }
   .glow-text {
     text-shadow: 0 0 12px rgba(217, 226, 255, 0.4);
