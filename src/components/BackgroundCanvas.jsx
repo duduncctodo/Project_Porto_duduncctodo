@@ -178,19 +178,31 @@ function createGlobe(pointCount, hubCount, radius) {
   nodeGroup.add(new THREE.Points(pointGeometry, pointMaterial))
   disposables.push(pointGeometry, pointMaterial)
 
+  // Two-beat motion so the break-up reads as cause and effect instead of
+  // two unrelated animations: for the first half of the scroll the nodes
+  // shrink IN PLACE with the earth (same inward pull as earthGroup's own
+  // scale-down, so they stay visibly stuck to its shrinking surface); only
+  // in the second half do they release and burst out to scatterTargets.
   let lastScatterT = -1
   function updateScatter(t) {
     if (t === lastScatterT) return
     lastScatterT = t
+    const shrink = Math.min(1, t / 0.5) * 0.85
+    const burst = Math.max(0, (t - 0.5) / 0.5)
+    const burstEase = burst * burst * (3 - 2 * burst)
     for (let i = 0; i < pointCount; i++) {
       const i3 = i * 3
-      nodePositions[i3] = positions[i3] + (scatterTargets[i3] - positions[i3]) * t
-      nodePositions[i3 + 1] = positions[i3 + 1] + (scatterTargets[i3 + 1] - positions[i3 + 1]) * t
-      nodePositions[i3 + 2] = positions[i3 + 2] + (scatterTargets[i3 + 2] - positions[i3 + 2]) * t
+      const ax = positions[i3] * (1 - shrink)
+      const ay = positions[i3 + 1] * (1 - shrink)
+      const az = positions[i3 + 2] * (1 - shrink)
+      nodePositions[i3] = ax + (scatterTargets[i3] - ax) * burstEase
+      nodePositions[i3 + 1] = ay + (scatterTargets[i3 + 1] - ay) * burstEase
+      nodePositions[i3 + 2] = az + (scatterTargets[i3 + 2] - az) * burstEase
     }
     pointGeometry.attributes.position.needsUpdate = true
     for (let h = 0; h < hubMarkers.length; h++) {
-      hubMarkers[h].position.lerpVectors(hubBasePositions[h], hubScatterTargets[h], t)
+      const attached = hubBasePositions[h].clone().multiplyScalar(1 - shrink)
+      hubMarkers[h].position.lerpVectors(attached, hubScatterTargets[h], burstEase)
     }
   }
 
