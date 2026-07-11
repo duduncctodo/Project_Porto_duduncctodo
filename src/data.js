@@ -8,6 +8,7 @@ export const BOOT_TEXTS = [
 ]
 
 export const NAV_LINKS = [
+  { id: 'hero', label: 'Beranda' },
   { id: 'intro', label: 'Intro' },
   { id: 'work', label: 'Experience' },
   { id: 'uni', label: 'Uni Things' },
