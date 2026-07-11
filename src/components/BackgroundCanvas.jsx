@@ -398,12 +398,23 @@ export default function BackgroundCanvas({ revealed }) {
       // for ~60fps) stay consistent on 90/120Hz screens instead of racing.
       const dt60 = Math.min(3, clock.getDelta() * 60)
 
-      const targetX = mouseX * 0.5
-      const targetY = mouseY * 0.5
-
       const targetT = targetTFromScroll()
       const follow = 1 - Math.pow(1 - 0.05, dt60)
       smoothedT += (targetT - smoothedT) * follow
+
+      // Hero choreography driver, computed up front: 0 while the Earth is
+      // still centering/shrinking/scattering, reaching 1 (and staying
+      // there) once Hero's scroll range is done. Reused below both to gate
+      // mouse parallax (off until the nodes finish scattering, per design)
+      // and to drive the Earth's own shrink/scatter/position animation.
+      const heroLocalT = Math.min(1, smoothedT / heroEndT)
+      const heroEase = heroLocalT * heroLocalT * (3 - 2 * heroLocalT)
+
+      // Parallax stays off for the whole Earth->scatter sequence so mouse
+      // movement never fights the intro choreography, then ramps in as
+      // heroEase reaches 1 — right as the nodes finish scattering.
+      const targetX = mouseX * 0.5 * heroEase
+      const targetY = mouseY * 0.5 * heroEase
 
       // Globe self-rotates independent of scroll — a slight wobble on top of
       // the spin keeps it from reading as a mechanically perfect loop.
@@ -422,8 +433,6 @@ export default function BackgroundCanvas({ revealed }) {
       // cluster the camera arrives at next. Anchored to the camera's current
       // position/facing (not a fixed world point) so it stays in view no
       // matter how far the camera itself travels during Hero's scroll range.
-      const heroLocalT = Math.min(1, smoothedT / heroEndT)
-      const heroEase = heroLocalT * heroLocalT * (3 - 2 * heroLocalT)
       const heroRight = tangent.clone().cross(worldUp).normalize()
       globe.group.position
         .copy(camera.position)
