@@ -108,12 +108,16 @@ function createNetworkCluster(count, k, spread) {
 
 // Network globe landmark: a stylized Earth body (wireframe + faint fill,
 // no external texture/model) wearing a shell of network nodes. Split into
-// two sibling groups so Task 2 can shrink the Earth body and scatter the
-// node cloud independently instead of animating them as one lump:
-// - earthGroup: the planet body + hub markers/arcs/packets (the
+// two sibling groups so the Earth body can shrink away while the nodes
+// break off and scatter instead of animating together as one lump:
+// - earthGroup: the planet body + its connecting arcs/packets (the
 //   "structured backbone" that dissolves with the planet).
-// - nodeGroup: the fibonacci point cloud, reinterpreted as atmosphere
-//   nodes, with precomputed random scatter targets for updateScatter().
+// - nodeGroup: the fibonacci point cloud AND the hub markers — the
+//   nodes themselves, each with a precomputed random scatter target
+//   (updateScatter()) sampled from the same point they started on, so
+//   they read as pieces of the globe breaking off rather than new
+//   objects appearing. Their materials are excluded from setFade() so
+//   they stay visible after the Earth has dissolved.
 // hubMarkers[] is exposed so one marker can be pulled out and reused as
 // the standalone "Intro" landmark.
 function createGlobe(pointCount, hubCount, radius) {
@@ -185,11 +189,22 @@ function createGlobe(pointCount, hubCount, radius) {
       nodePositions[i3 + 2] = positions[i3 + 2] + (scatterTargets[i3 + 2] - positions[i3 + 2]) * t
     }
     pointGeometry.attributes.position.needsUpdate = true
+    for (let h = 0; h < hubMarkers.length; h++) {
+      hubMarkers[h].position.lerpVectors(hubBasePositions[h], hubScatterTargets[h], t)
+    }
   }
 
+  // Hub markers are the most visible "nodes" on the globe, so they live in
+  // nodeGroup (not earthGroup) and get their own scatter target sampled
+  // from the same scatterTargets buffer as the point cloud — they're
+  // literally pieces of the globe's surface, breaking off and drifting
+  // out to where "their" point would have gone, instead of shrinking away
+  // with the planet body.
   const hubGeometry = new THREE.SphereGeometry(0.35, 12, 12)
   disposables.push(hubGeometry)
   const hubMarkers = []
+  const hubBasePositions = []
+  const hubScatterTargets = []
   for (let h = 0; h < hubCount; h++) {
     const i = Math.floor((h / hubCount) * pointCount)
     const hubMaterial = new THREE.MeshBasicMaterial({ color: 0xeaf0ff, transparent: true, opacity: 1 })
@@ -197,7 +212,9 @@ function createGlobe(pointCount, hubCount, radius) {
     marker.position.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
     disposables.push(hubMaterial)
     hubMarkers.push(marker)
-    earthGroup.add(marker)
+    hubBasePositions.push(marker.position.clone())
+    hubScatterTargets.push(new THREE.Vector3(scatterTargets[i * 3], scatterTargets[i * 3 + 1], scatterTargets[i * 3 + 2]))
+    nodeGroup.add(marker)
   }
 
   const arcMaterial = new THREE.LineBasicMaterial({ color: 0x44464f, transparent: true, opacity: 0.2 })
@@ -236,7 +253,11 @@ function createGlobe(pointCount, hubCount, radius) {
   earthGroup.add(new THREE.Points(packetGeometry, packetMaterial))
   disposables.push(packetGeometry, packetMaterial)
 
-  const fadeMaterials = [earthFillMaterial, earthWireMaterial, pointMaterial, arcMaterial, packetMaterial, ...hubMarkers.map((m) => m.material)]
+  // Only the planet body and its arcs/packets dissolve — the scattered
+  // nodes (points + hub markers) are meant to persist as the lasting
+  // "network" left behind once the Earth has broken apart, so their
+  // materials are deliberately excluded here.
+  const fadeMaterials = [earthFillMaterial, earthWireMaterial, arcMaterial, packetMaterial]
   const baseOpacities = fadeMaterials.map((m) => m.opacity)
 
   let elapsed = 0
@@ -271,7 +292,7 @@ function createGlobe(pointCount, hubCount, radius) {
     fadeMaterials.forEach((m, i) => { m.opacity = baseOpacities[i] * amount })
   }
 
-  return { group, earthGroup, hubMarkers, updatePackets, updateScatter, setFade, dispose: () => disposables.forEach((d) => d.dispose()) }
+  return { group, earthGroup, nodeGroup, hubMarkers, updatePackets, updateScatter, setFade, dispose: () => disposables.forEach((d) => d.dispose()) }
 }
 
 // Global-network background: camera flies along a fixed curve whose
@@ -319,7 +340,7 @@ export default function BackgroundCanvas({ revealed }) {
     // Pull one hub marker out of the self-rotating globe group so it can sit
     // still at its own point on the curve — the "entry point" for Intro.
     const introHub = globe.hubMarkers[0]
-    globe.earthGroup.remove(introHub)
+    globe.nodeGroup.remove(introHub)
     introHub.scale.setScalar(1.8)
     const workCluster = createNetworkCluster(clusterCount, clusterK, 30)
     const uniCluster = createNetworkCluster(clusterCount, clusterK, 30)
