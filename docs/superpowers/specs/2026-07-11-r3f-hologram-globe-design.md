@@ -41,3 +41,15 @@ One file, three internal components + the exported wrapper:
 ## Testing
 
 Manual verification via dev server (`npm run dev`): confirm globe renders behind page content, rotation accelerates and camera dollies in while scrolling, mouse movement nudges the view subtly, `prefers-reduced-motion` shows a static frame, and no console errors from the new dependencies.
+
+## Amendment (post-QA): one-time shrink-and-explode at 50% scroll
+
+Found during manual QA: the plain continuous rotation/zoom read as flat. Added a one-way latched event tied to scroll:
+
+- **Shrink (scroll 0% → 50%):** as `scrollProgress` advances toward `EXPLODE_THRESHOLD = 0.5`, the wireframe shell and the node group (particles + hub markers) shrink together in place (scale 1 → 0.15), still rotating — reads as "the globe getting smaller," not yet the burst.
+- **Explode (latched once, at the instant `scrollProgress` first crosses 0.5):** a `triggered` ref flips permanently true (never resets on scroll back up — this is a one-way latch for the session, not a continuous scroll-mapped state, matching the non-reversible behavior explicitly requested over the alternative "reversible, spread across the whole page" option). From that instant, a **time-based** (not scroll-based) eased burst runs over `BURST_DURATION = 1.4s`: every particle and hub marker animates from its shrunk position to an independently-sampled random target outside the sphere (`RADIUS * (2.5–6)`, random direction) — same shrink-then-burst two-beat shape previously used for the (now-removed) Hero scatter intro, reused here because it's an already-proven technique in this codebase.
+- **Shell fade:** the wireframe sphere, the bezier arcs, and their traveling packets fade opacity → 0 over the same burst window (they are the "structured backbone" that dissolves; particles and hub markers are the persisting "nodes" and are excluded from the fade, only repositioned).
+- **Depth parallax (post-explosion only):** each burst target's distance from center sets a per-node `depthFactor`; every frame, that node's displayed position gets `pointer.xy * depthFactor * PARALLAX_STRENGTH` added on top of its held burst position — nearer nodes move more than farther ones. This **replaces** (does not add to) the existing whole-camera mouse parallax: `CameraRig` tapers its own pointer-driven offset back to zero once `triggered` is true, so the interactive feel transfers from "camera nudges" to "the node field itself nudges, with depth."
+- **Rotation freezes** at whatever angle the group had at the moment of explosion (no more incrementing) — a rigid rotating star-field would look wrong once the nodes are independent scattered points.
+- **Scroll after 50%** continues to do only one thing: dolly the camera closer (unchanged formula), so continuing to scroll reads as "flying through" the exploded node field.
+- Reload resets everything (the latch lives in a `useRef`, not persisted) — this is accepted, not treated as a gap.
