@@ -446,6 +446,16 @@ export default function BackgroundCanvas({ revealed }) {
       const heroLocalT = Math.min(1, smoothedT / heroEndT)
       const heroEase = heroLocalT * heroLocalT * (3 - 2 * heroLocalT)
 
+      // The other landmarks sit further down the same curve the camera
+      // generally faces from frame one, so their points can bleed into the
+      // wide-FOV Hero shot before the camera ever reaches them. Keep the
+      // Hero view exclusively the globe's own nodes until Hero is done.
+      const inHero = heroEase < 1
+      introHub.visible = !inHero
+      workCluster.group.visible = !inHero
+      uniCluster.group.visible = !inHero
+      connector.visible = !inHero
+
       // Parallax stays off for the whole Earth->scatter sequence so mouse
       // movement never fights the intro choreography, then ramps in as
       // heroEase reaches 1 — right as the nodes finish scattering.
