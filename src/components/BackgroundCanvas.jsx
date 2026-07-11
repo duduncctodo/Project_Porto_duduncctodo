@@ -76,10 +76,10 @@ function createNetworkCluster(count, k, spread) {
   })
   group.add(new THREE.Points(packetGeometry, packetMaterial))
 
-  function updatePackets() {
+  function updatePackets(dt60 = 1) {
     for (let p = 0; p < packetCount; p++) {
       const state = packetState[p]
-      state.progress += state.speed * 0.01
+      state.progress += state.speed * 0.01 * dt60
       if (state.progress >= 1) {
         state.progress = 0
         state.edge = Math.floor(Math.random() * edges.length)
@@ -106,52 +106,124 @@ function createNetworkCluster(count, k, spread) {
   return { group, updatePackets, dispose }
 }
 
-// Microcontroller chip landmark: body + two rows of pins + radiating trace lines.
-function createChip(pinsPerSide) {
+// Network globe landmark: Fibonacci-sphere point cloud, a handful of bright
+// hub markers, and arcs bowed out from the surface connecting them — reads
+// as a live global network backbone. hubMarkers[] is exposed so one marker
+// can be pulled out and reused as the standalone "Intro" landmark.
+function createGlobe(pointCount, hubCount, radius) {
   const group = new THREE.Group()
   const disposables = []
 
-  const bodyGeometry = new THREE.BoxGeometry(6, 0.6, 6)
-  const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0x1a1b20 })
-  group.add(new THREE.Mesh(bodyGeometry, bodyMaterial))
-  disposables.push(bodyGeometry, bodyMaterial)
+  const positions = new Float32Array(pointCount * 3)
+  const golden = Math.PI * (3 - Math.sqrt(5))
+  for (let i = 0; i < pointCount; i++) {
+    const y = 1 - (i / (pointCount - 1)) * 2
+    const r = Math.sqrt(Math.max(0, 1 - y * y))
+    const theta = golden * i
+    positions[i * 3] = Math.cos(theta) * r * radius
+    positions[i * 3 + 1] = y * radius
+    positions[i * 3 + 2] = Math.sin(theta) * r * radius
+  }
+  const pointGeometry = new THREE.BufferGeometry()
+  pointGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  const pointMaterial = new THREE.PointsMaterial({
+    size: 0.22,
+    color: 0xb0c6ff,
+    transparent: true,
+    opacity: 0.7,
+    blending: THREE.AdditiveBlending,
+  })
+  group.add(new THREE.Points(pointGeometry, pointMaterial))
+  disposables.push(pointGeometry, pointMaterial)
 
-  const pinGeometry = new THREE.BoxGeometry(0.8, 0.15, 0.25)
-  const pinMaterial = new THREE.MeshBasicMaterial({ color: 0xb0c6ff })
-  disposables.push(pinGeometry, pinMaterial)
-  const half = 6 / 2
-  for (let side = 0; side < 2; side++) {
-    const sign = side === 0 ? 1 : -1
-    for (let i = 0; i < pinsPerSide; i++) {
-      const pin = new THREE.Mesh(pinGeometry, pinMaterial)
-      pin.position.set(sign * (half + 0.5), 0, (i - (pinsPerSide - 1) / 2) * 0.9)
-      pin.rotation.y = Math.PI / 2
-      group.add(pin)
+  const hubGeometry = new THREE.SphereGeometry(0.35, 12, 12)
+  disposables.push(hubGeometry)
+  const hubMarkers = []
+  for (let h = 0; h < hubCount; h++) {
+    const i = Math.floor((h / hubCount) * pointCount)
+    const hubMaterial = new THREE.MeshBasicMaterial({ color: 0xeaf0ff, transparent: true, opacity: 1 })
+    const marker = new THREE.Mesh(hubGeometry, hubMaterial)
+    marker.position.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
+    disposables.push(hubMaterial)
+    hubMarkers.push(marker)
+    group.add(marker)
+  }
+
+  const arcMaterial = new THREE.LineBasicMaterial({ color: 0x44464f, transparent: true, opacity: 0.2 })
+  disposables.push(arcMaterial)
+  const arcCurves = []
+  for (let h = 0; h < hubCount; h++) {
+    const a = hubMarkers[h].position
+    const b = hubMarkers[(h + 1) % hubCount].position
+    const mid = a.clone().add(b).multiplyScalar(0.5).normalize().multiplyScalar(radius * 1.35)
+    const arcCurve = new THREE.QuadraticBezierCurve3(a, mid, b)
+    arcCurves.push(arcCurve)
+    const arcGeometry = new THREE.BufferGeometry().setFromPoints(arcCurve.getPoints(16))
+    group.add(new THREE.Line(arcGeometry, arcMaterial))
+    disposables.push(arcGeometry)
+  }
+
+  // Packets of light traveling the arcs — same "data moving" idea as the
+  // cluster packets, so the globe reads as live before the camera ever
+  // reaches a cluster.
+  const packetCount = hubCount * 3
+  const packetPositions = new Float32Array(packetCount * 3)
+  const packetState = Array.from({ length: packetCount }, () => ({
+    arc: Math.floor(Math.random() * arcCurves.length),
+    progress: Math.random(),
+    speed: 0.2 + Math.random() * 0.3,
+  }))
+  const packetGeometry = new THREE.BufferGeometry()
+  packetGeometry.setAttribute('position', new THREE.BufferAttribute(packetPositions, 3))
+  const packetMaterial = new THREE.PointsMaterial({
+    size: 0.5,
+    color: 0xeaf0ff,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+  })
+  group.add(new THREE.Points(packetGeometry, packetMaterial))
+  disposables.push(packetGeometry, packetMaterial)
+
+  const fadeMaterials = [pointMaterial, arcMaterial, packetMaterial, ...hubMarkers.map((m) => m.material)]
+  const baseOpacities = fadeMaterials.map((m) => m.opacity)
+
+  let elapsed = 0
+  function updatePackets(dt60 = 1) {
+    elapsed += dt60 / 60
+    for (let p = 0; p < packetCount; p++) {
+      const state = packetState[p]
+      state.progress += state.speed * 0.01 * dt60
+      if (state.progress >= 1) {
+        state.progress = 0
+        state.arc = Math.floor(Math.random() * arcCurves.length)
+        state.speed = 0.2 + Math.random() * 0.3
+      }
+      const pos = arcCurves[state.arc].getPointAt(state.progress)
+      packetPositions[p * 3] = pos.x
+      packetPositions[p * 3 + 1] = pos.y
+      packetPositions[p * 3 + 2] = pos.z
     }
+    packetGeometry.attributes.position.needsUpdate = true
+
+    // Hub markers breathe like a status light — a subtle "alive" pulse.
+    hubMarkers.forEach((marker, h) => {
+      const pulse = 1 + Math.sin(elapsed * 2 + h * 1.3) * 0.15
+      marker.scale.setScalar(pulse)
+    })
   }
 
-  const traceCount = 8
-  const tracePositions = new Float32Array(traceCount * 6)
-  for (let i = 0; i < traceCount; i++) {
-    const angle = (i / traceCount) * Math.PI * 2
-    const i6 = i * 6
-    tracePositions[i6] = Math.cos(angle) * 3.5
-    tracePositions[i6 + 1] = 0
-    tracePositions[i6 + 2] = Math.sin(angle) * 3.5
-    tracePositions[i6 + 3] = Math.cos(angle) * 9
-    tracePositions[i6 + 4] = 0
-    tracePositions[i6 + 5] = Math.sin(angle) * 9
+  // Fades every part of the globe together (0 = invisible, 1 = full), used
+  // to dissolve it once the camera passes it and the network cluster ahead
+  // takes over — the globe "breaking apart" into the wider network.
+  function setFade(amount) {
+    fadeMaterials.forEach((m, i) => { m.opacity = baseOpacities[i] * amount })
   }
-  const traceGeometry = new THREE.BufferGeometry()
-  traceGeometry.setAttribute('position', new THREE.BufferAttribute(tracePositions, 3))
-  const traceMaterial = new THREE.LineBasicMaterial({ color: 0xb0c6ff, transparent: true, opacity: 0.25 })
-  group.add(new THREE.LineSegments(traceGeometry, traceMaterial))
-  disposables.push(traceGeometry, traceMaterial)
 
-  return { group, dispose: () => disposables.forEach((d) => d.dispose()) }
+  return { group, hubMarkers, updatePackets, setFade, dispose: () => disposables.forEach((d) => d.dispose()) }
 }
 
-// Circuit-journey background: camera flies along a fixed curve whose
+// Global-network background: camera flies along a fixed curve whose
 // progress is driven by scroll, weighted per section so each section reads
 // as a distinct stop rather than an arbitrary point in a continuous blend.
 export default function BackgroundCanvas({ revealed }) {
@@ -160,15 +232,18 @@ export default function BackgroundCanvas({ revealed }) {
   useEffect(() => {
     const canvas = canvasRef.current
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(window.innerWidth, window.innerHeight)
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 
+    // First two points sweep around the globe (establishing/orbit shot);
+    // the rest is the unchanged dive toward the cluster/connector landmarks.
     const curve = new THREE.CatmullRomCurve3(
       [
-        new THREE.Vector3(0, 0, 40),
-        new THREE.Vector3(0, 0, 15),
+        new THREE.Vector3(0, 4, 50),
+        new THREE.Vector3(20, -2, 22),
         new THREE.Vector3(18, -6, -5),
         new THREE.Vector3(18, -6, -30),
         new THREE.Vector3(-16, -12, -55),
@@ -186,12 +261,15 @@ export default function BackgroundCanvas({ revealed }) {
     const tier = width < 640 ? 'sm' : width < 1200 ? 'md' : 'lg'
     const clusterCount = { sm: 150, md: 300, lg: 500 }[tier]
     const clusterK = tier === 'sm' ? 2 : 3
-    const pinsPerSide = { sm: 4, md: 6, lg: 8 }[tier]
+    const globePointCount = { sm: 400, md: 700, lg: 1000 }[tier]
+    const hubCount = { sm: 4, md: 5, lg: 6 }[tier]
 
-    const chip = createChip(pinsPerSide)
-    const grid = new THREE.GridHelper(40, 20, 0x44464f, 0x2a2c33)
-    grid.material.transparent = true
-    grid.material.opacity = 0.3
+    const globe = createGlobe(globePointCount, hubCount, 8)
+    // Pull one hub marker out of the self-rotating globe group so it can sit
+    // still at its own point on the curve — the "entry point" for Intro.
+    const introHub = globe.hubMarkers[0]
+    globe.group.remove(introHub)
+    introHub.scale.setScalar(1.8)
     const workCluster = createNetworkCluster(clusterCount, clusterK, 30)
     const uniCluster = createNetworkCluster(clusterCount, clusterK, 30)
 
@@ -206,12 +284,11 @@ export default function BackgroundCanvas({ revealed }) {
     })
     const connector = new THREE.Points(connectorGeometry, connectorMaterial)
 
-    scene.add(chip.group, grid, workCluster.group, uniCluster.group, connector)
+    scene.add(globe.group, introHub, workCluster.group, uniCluster.group, connector)
 
-    // Sections double as landmark anchors: 'hero' (chip) is not in NAV_LINKS
-    // (nav only links scroll-to sections below the fold), so it's prepended.
-    const sectionIds = ['hero', ...NAV_LINKS.map((l) => l.id)]
-    const sectionEls = sectionIds.map((id) => document.getElementById(id)).filter(Boolean)
+    // Sections double as landmark anchors — NAV_LINKS already starts with
+    // 'hero' (the "Beranda" link), so it's used as-is, not prepended again.
+    const sectionEls = NAV_LINKS.map((l) => document.getElementById(l.id)).filter(Boolean)
     const totalHeight = sectionEls.reduce((sum, el) => sum + el.offsetHeight, 0) || 1
     let acc = 0
     const sectionRanges = sectionEls.map((el) => {
@@ -220,11 +297,22 @@ export default function BackgroundCanvas({ revealed }) {
       return { top: el.offsetTop, height: el.offsetHeight, startT }
     })
 
-    const landmarkTargets = [chip.group, grid, workCluster.group, uniCluster.group, connector]
+    const landmarkTargets = [introHub, workCluster.group, uniCluster.group, connector]
     landmarkTargets.forEach((obj, i) => {
-      const t = i === landmarkTargets.length - 1 ? 1 : (sectionRanges[i]?.startT ?? i / (landmarkTargets.length - 1))
+      const t = i === landmarkTargets.length - 1 ? 1 : (sectionRanges[i + 1]?.startT ?? (i + 1) / landmarkTargets.length)
       obj.position.copy(curve.getPointAt(t))
     })
+
+    // Hero opening: globe starts zoomed-in and off to the right, then (as
+    // Hero is scrolled through) drifts to center and shrinks. Positioned
+    // relative to the camera each frame (not a fixed world point) — the
+    // curve's own P0->P1 stretch covers far more ground than this offset,
+    // so a world-anchored globe gets flown straight through mid-scroll.
+    const worldUp = new THREE.Vector3(0, 1, 0)
+    const heroEndT = sectionRanges[1]?.startT ?? 0.2
+    const heroTangent0 = curve.getTangentAt(0)
+    const heroRight0 = heroTangent0.clone().cross(worldUp).normalize()
+    globe.group.position.copy(camera.position).addScaledVector(heroTangent0, 15).addScaledVector(heroRight0, 9)
 
     function targetTFromScroll() {
       const y = window.scrollY
@@ -253,25 +341,52 @@ export default function BackgroundCanvas({ revealed }) {
     let frameId
     let smoothedT = 0
     const lookTarget = new THREE.Vector3()
+    const clock = new THREE.Clock()
 
     function animate() {
       frameId = requestAnimationFrame(animate)
+
+      // Normalize against a 60fps baseline so lerp/rotation speeds (tuned
+      // for ~60fps) stay consistent on 90/120Hz screens instead of racing.
+      const dt60 = Math.min(3, clock.getDelta() * 60)
 
       const targetX = mouseX * 0.5
       const targetY = mouseY * 0.5
 
       const targetT = targetTFromScroll()
-      smoothedT += (targetT - smoothedT) * 0.05
+      const follow = 1 - Math.pow(1 - 0.05, dt60)
+      smoothedT += (targetT - smoothedT) * follow
 
-      workCluster.updatePackets()
-      uniCluster.updatePackets()
+      // Globe self-rotates independent of scroll — a slight wobble on top of
+      // the spin keeps it from reading as a mechanically perfect loop.
+      globe.group.rotation.y += 0.006 * dt60
+      globe.group.rotation.x = Math.sin(clock.elapsedTime * 0.15) * 0.06
 
       const curvePos = curve.getPointAt(smoothedT)
       const tangent = curve.getTangentAt(smoothedT)
-      camera.position.x += (curvePos.x + targetX - camera.position.x) * 0.05
-      camera.position.y += (curvePos.y - targetY - camera.position.y) * 0.05
-      camera.position.z += (curvePos.z - camera.position.z) * 0.05
+      camera.position.x += (curvePos.x + targetX - camera.position.x) * follow
+      camera.position.y += (curvePos.y - targetY - camera.position.y) * follow
+      camera.position.z += (curvePos.z - camera.position.z) * follow
       lookTarget.copy(curvePos).add(tangent)
+
+      // Hero choreography: right+zoomed -> center+small as Hero scrolls by,
+      // fading out near the end so it reads as dissolving into the network
+      // cluster the camera arrives at next. Anchored to the camera's current
+      // position/facing (not a fixed world point) so it stays in view no
+      // matter how far the camera itself travels during Hero's scroll range.
+      const heroLocalT = Math.min(1, smoothedT / heroEndT)
+      const heroEase = heroLocalT * heroLocalT * (3 - 2 * heroLocalT)
+      const heroRight = tangent.clone().cross(worldUp).normalize()
+      globe.group.position
+        .copy(camera.position)
+        .addScaledVector(tangent, 15)
+        .addScaledVector(heroRight, 9 * (1 - heroEase))
+      globe.group.scale.setScalar(1 - heroEase * 0.82)
+      globe.setFade(1 - Math.max(0, heroLocalT - 0.6) / 0.4)
+
+      globe.updatePackets(dt60)
+      workCluster.updatePackets(dt60)
+      uniCluster.updatePackets(dt60)
       camera.lookAt(lookTarget)
 
       renderer.render(scene, camera)
@@ -289,9 +404,7 @@ export default function BackgroundCanvas({ revealed }) {
       cancelAnimationFrame(frameId)
       window.removeEventListener('resize', handleResize)
       document.removeEventListener('mousemove', handleMouseMove)
-      chip.dispose()
-      grid.geometry.dispose()
-      grid.material.dispose()
+      globe.dispose()
       workCluster.dispose()
       uniCluster.dispose()
       connectorGeometry.dispose()
