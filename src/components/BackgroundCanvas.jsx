@@ -429,7 +429,8 @@ export default function BackgroundCanvas({ revealed }) {
         .copy(camera.position)
         .addScaledVector(tangent, 15)
         .addScaledVector(heroRight, 9 * (1 - heroEase))
-      globe.group.scale.setScalar(1 - heroEase * 0.82)
+      globe.earthGroup.scale.setScalar(1 - heroEase)
+      globe.updateScatter(heroEase)
       globe.setFade(1 - Math.max(0, heroLocalT - 0.6) / 0.4)
 
       globe.updatePackets(dt60)
