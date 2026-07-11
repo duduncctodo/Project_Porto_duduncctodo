@@ -315,9 +315,14 @@ export default function BackgroundCanvas({ revealed }) {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    // No antialias: this is a soft glow-points scene behind page content —
+    // AA is invisible here but doubles fragment cost on a full-viewport
+    // canvas. Pixel ratio capped at 1.5 for the same fill-rate reason.
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
     renderer.setSize(window.innerWidth, window.innerHeight)
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
@@ -495,7 +500,28 @@ export default function BackgroundCanvas({ revealed }) {
 
       renderer.render(scene, camera)
     }
-    animate()
+
+    // Respect the OS-level motion preference: render one static frame
+    // instead of running the loop at all.
+    if (reduceMotion) {
+      camera.position.copy(curve.getPointAt(1))
+      camera.lookAt(curve.getPointAt(1).clone().add(curve.getTangentAt(1)))
+      renderer.render(scene, camera)
+    } else {
+      animate()
+    }
+
+    // Stop rendering while the tab is backgrounded — a hidden canvas still
+    // burns GPU/battery at 60fps otherwise.
+    function handleVisibility() {
+      if (document.hidden) {
+        cancelAnimationFrame(frameId)
+      } else if (!reduceMotion) {
+        clock.getDelta() // discard the paused-time gap so dt60 doesn't spike
+        animate()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
 
     function handleResize() {
       camera.aspect = window.innerWidth / window.innerHeight
@@ -508,6 +534,7 @@ export default function BackgroundCanvas({ revealed }) {
       cancelAnimationFrame(frameId)
       window.removeEventListener('resize', handleResize)
       document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('visibilitychange', handleVisibility)
       globe.dispose()
       workCluster.dispose()
       uniCluster.dispose()
