@@ -174,7 +174,10 @@ function createGlobe(pointCount, hubCount, radius) {
   nodeGroup.add(new THREE.Points(pointGeometry, pointMaterial))
   disposables.push(pointGeometry, pointMaterial)
 
+  let lastScatterT = -1
   function updateScatter(t) {
+    if (t === lastScatterT) return
+    lastScatterT = t
     for (let i = 0; i < pointCount; i++) {
       const i3 = i * 3
       nodePositions[i3] = positions[i3] + (scatterTargets[i3] - positions[i3]) * t
@@ -268,7 +271,7 @@ function createGlobe(pointCount, hubCount, radius) {
     fadeMaterials.forEach((m, i) => { m.opacity = baseOpacities[i] * amount })
   }
 
-  return { group, earthGroup, nodeGroup, hubMarkers, updatePackets, updateScatter, setFade, dispose: () => disposables.forEach((d) => d.dispose()) }
+  return { group, earthGroup, hubMarkers, updatePackets, updateScatter, setFade, dispose: () => disposables.forEach((d) => d.dispose()) }
 }
 
 // Global-network background: camera flies along a fixed curve whose
