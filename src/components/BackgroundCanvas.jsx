@@ -106,13 +106,34 @@ function createNetworkCluster(count, k, spread) {
   return { group, updatePackets, dispose }
 }
 
-// Network globe landmark: Fibonacci-sphere point cloud, a handful of bright
-// hub markers, and arcs bowed out from the surface connecting them — reads
-// as a live global network backbone. hubMarkers[] is exposed so one marker
-// can be pulled out and reused as the standalone "Intro" landmark.
+// Network globe landmark: a stylized Earth body (wireframe + faint fill,
+// no external texture/model) wearing a shell of network nodes. Split into
+// two sibling groups so Task 2 can shrink the Earth body and scatter the
+// node cloud independently instead of animating them as one lump:
+// - earthGroup: the planet body + hub markers/arcs/packets (the
+//   "structured backbone" that dissolves with the planet).
+// - nodeGroup: the fibonacci point cloud, reinterpreted as atmosphere
+//   nodes, with precomputed random scatter targets for updateScatter().
+// hubMarkers[] is exposed so one marker can be pulled out and reused as
+// the standalone "Intro" landmark.
 function createGlobe(pointCount, hubCount, radius) {
   const group = new THREE.Group()
+  const earthGroup = new THREE.Group()
+  const nodeGroup = new THREE.Group()
+  group.add(earthGroup, nodeGroup)
   const disposables = []
+
+  // Earth body: faint solid fill for a sense of mass + a lat/long
+  // wireframe shell on top, both procedural.
+  const earthFillGeometry = new THREE.SphereGeometry(radius * 0.92, 24, 16)
+  const earthFillMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0d16, transparent: true, opacity: 0.55 })
+  earthGroup.add(new THREE.Mesh(earthFillGeometry, earthFillMaterial))
+  disposables.push(earthFillGeometry, earthFillMaterial)
+
+  const earthWireGeometry = new THREE.SphereGeometry(radius * 0.94, 24, 16)
+  const earthWireMaterial = new THREE.MeshBasicMaterial({ color: 0x44464f, wireframe: true, transparent: true, opacity: 0.35 })
+  earthGroup.add(new THREE.Mesh(earthWireGeometry, earthWireMaterial))
+  disposables.push(earthWireGeometry, earthWireMaterial)
 
   const positions = new Float32Array(pointCount * 3)
   const golden = Math.PI * (3 - Math.sqrt(5))
@@ -124,8 +145,25 @@ function createGlobe(pointCount, hubCount, radius) {
     positions[i * 3 + 1] = y * radius
     positions[i * 3 + 2] = Math.sin(theta) * r * radius
   }
+
+  // One random scatter target per node, well outside the sphere, so
+  // updateScatter() can lerp each node from its sphere position out to a
+  // random position as the Earth shrinks away beside it.
+  const scatterTargets = new Float32Array(pointCount * 3)
+  for (let i = 0; i < pointCount; i++) {
+    const dir = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize()
+    const dist = radius * (2 + Math.random() * 2.5)
+    scatterTargets[i * 3] = dir.x * dist
+    scatterTargets[i * 3 + 1] = dir.y * dist
+    scatterTargets[i * 3 + 2] = dir.z * dist
+  }
+  // Live buffer bound to the Points attribute; `positions` stays the
+  // untouched sphere layout so updateScatter can always lerp from a clean
+  // base (needed since scroll can move t forwards or backwards).
+  const nodePositions = positions.slice()
+
   const pointGeometry = new THREE.BufferGeometry()
-  pointGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  pointGeometry.setAttribute('position', new THREE.BufferAttribute(nodePositions, 3))
   const pointMaterial = new THREE.PointsMaterial({
     size: 0.22,
     color: 0xb0c6ff,
@@ -133,8 +171,18 @@ function createGlobe(pointCount, hubCount, radius) {
     opacity: 0.7,
     blending: THREE.AdditiveBlending,
   })
-  group.add(new THREE.Points(pointGeometry, pointMaterial))
+  nodeGroup.add(new THREE.Points(pointGeometry, pointMaterial))
   disposables.push(pointGeometry, pointMaterial)
+
+  function updateScatter(t) {
+    for (let i = 0; i < pointCount; i++) {
+      const i3 = i * 3
+      nodePositions[i3] = positions[i3] + (scatterTargets[i3] - positions[i3]) * t
+      nodePositions[i3 + 1] = positions[i3 + 1] + (scatterTargets[i3 + 1] - positions[i3 + 1]) * t
+      nodePositions[i3 + 2] = positions[i3 + 2] + (scatterTargets[i3 + 2] - positions[i3 + 2]) * t
+    }
+    pointGeometry.attributes.position.needsUpdate = true
+  }
 
   const hubGeometry = new THREE.SphereGeometry(0.35, 12, 12)
   disposables.push(hubGeometry)
@@ -146,7 +194,7 @@ function createGlobe(pointCount, hubCount, radius) {
     marker.position.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
     disposables.push(hubMaterial)
     hubMarkers.push(marker)
-    group.add(marker)
+    earthGroup.add(marker)
   }
 
   const arcMaterial = new THREE.LineBasicMaterial({ color: 0x44464f, transparent: true, opacity: 0.2 })
@@ -159,7 +207,7 @@ function createGlobe(pointCount, hubCount, radius) {
     const arcCurve = new THREE.QuadraticBezierCurve3(a, mid, b)
     arcCurves.push(arcCurve)
     const arcGeometry = new THREE.BufferGeometry().setFromPoints(arcCurve.getPoints(16))
-    group.add(new THREE.Line(arcGeometry, arcMaterial))
+    earthGroup.add(new THREE.Line(arcGeometry, arcMaterial))
     disposables.push(arcGeometry)
   }
 
@@ -182,10 +230,10 @@ function createGlobe(pointCount, hubCount, radius) {
     opacity: 0.9,
     blending: THREE.AdditiveBlending,
   })
-  group.add(new THREE.Points(packetGeometry, packetMaterial))
+  earthGroup.add(new THREE.Points(packetGeometry, packetMaterial))
   disposables.push(packetGeometry, packetMaterial)
 
-  const fadeMaterials = [pointMaterial, arcMaterial, packetMaterial, ...hubMarkers.map((m) => m.material)]
+  const fadeMaterials = [earthFillMaterial, earthWireMaterial, pointMaterial, arcMaterial, packetMaterial, ...hubMarkers.map((m) => m.material)]
   const baseOpacities = fadeMaterials.map((m) => m.opacity)
 
   let elapsed = 0
@@ -220,7 +268,7 @@ function createGlobe(pointCount, hubCount, radius) {
     fadeMaterials.forEach((m, i) => { m.opacity = baseOpacities[i] * amount })
   }
 
-  return { group, hubMarkers, updatePackets, setFade, dispose: () => disposables.forEach((d) => d.dispose()) }
+  return { group, earthGroup, nodeGroup, hubMarkers, updatePackets, updateScatter, setFade, dispose: () => disposables.forEach((d) => d.dispose()) }
 }
 
 // Global-network background: camera flies along a fixed curve whose
@@ -268,7 +316,7 @@ export default function BackgroundCanvas({ revealed }) {
     // Pull one hub marker out of the self-rotating globe group so it can sit
     // still at its own point on the curve — the "entry point" for Intro.
     const introHub = globe.hubMarkers[0]
-    globe.group.remove(introHub)
+    globe.earthGroup.remove(introHub)
     introHub.scale.setScalar(1.8)
     const workCluster = createNetworkCluster(clusterCount, clusterK, 30)
     const uniCluster = createNetworkCluster(clusterCount, clusterK, 30)
