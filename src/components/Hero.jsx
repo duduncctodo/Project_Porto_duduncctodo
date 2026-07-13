@@ -77,15 +77,15 @@ export default function Hero({ revealed, isDark }) {
           <img
             ref={profileImgRef}
             alt="Profile"
-            className="w-full h-full object-cover rounded-2xl grayscale hover:grayscale-0"
+            className="w-full h-full object-cover rounded-2xl"
             src={profileImage}
             style={{
               willChange: 'transform, filter',
               transition: 'filter 1s ease 0.25s',
               filter: profileVisible
                 ? isDark
-                  ? 'drop-shadow(0 30px 60px rgba(176,198,255,0.25)) drop-shadow(0 8px 24px rgba(0,0,0,0.75)) grayscale(1)'
-                  : 'drop-shadow(0 30px 60px rgba(71,93,144,0.22)) drop-shadow(0 8px 24px rgba(71,93,144,0.18)) grayscale(1)'
+                  ? 'drop-shadow(0 30px 60px rgba(176,198,255,0.25)) drop-shadow(0 8px 24px rgba(0,0,0,0.75))'
+                  : 'drop-shadow(0 30px 60px rgba(71,93,144,0.22)) drop-shadow(0 8px 24px rgba(71,93,144,0.18))'
                 : 'none',
             }}
           />
