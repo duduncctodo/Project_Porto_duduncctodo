@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { SCENE_SECTION_IDS, buildBands, sceneStates } from '../three/scrollytelling'
 import EarthScene from './scenes/EarthScene'
+import DataCenterScene from './scenes/DataCenterScene'
 
 // Mirrors the mouse-parallax convention already used app-wide (App.jsx):
 // skipped entirely on touch devices, normalized to -1..1.
@@ -110,6 +111,7 @@ export default function BackgroundCanvas({ revealed }) {
         <Suspense fallback={null}>
           <EarthScene statesRef={statesRef} index={0} pointer={pointer} />
         </Suspense>
+        <DataCenterScene statesRef={statesRef} index={1} pointer={pointer} />
         <CameraRig pointer={pointer} />
         {postEnabled && (
           <EffectComposer>
